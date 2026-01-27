@@ -1,26 +1,387 @@
 @import "tailwindcss";
 
-:root {
+/**
+ * Noor ul Ilm - Global Styles
+ * 
+ * Color Palette: Royal Black & Gold Theme
+ * - Primary: Rich Black (elegant, sophisticated)
+ * - Secondary: Royal Gold (represents light/noor, luxury)
+ * - Accent: Deep gold tones for highlights
+ * 
+ * Supports both dark and light themes via data-theme attribute
+ */
+
+/* ============================================
+   DARK THEME (Default)
+   ============================================ */
+:root,
+[data-theme="dark"] {
+  /* Primary Colors - Royal Black */
+  --primary: #0a0a0a;
+  --primary-light: #1a1a1a;
+  --primary-dark: #000000;
+
+  /* Secondary Colors - Royal Gold (Noor) */
+  --gold: #d4af37;
+  --gold-light: #f4d03f;
+  --gold-dark: #b8860b;
+  --gold-muted: #c9a227;
+
+  /* Background Colors */
+  --background: #0a0a0a;
+  --background-secondary: #111111;
+  --background-tertiary: #1a1a1a;
+
+  /* Text Colors - Brighter for dark mode */
+  --foreground: #ffffff;
+  --foreground-secondary: #e5e5e5;
+  --foreground-muted: #a3a3a3;
+
+  /* Arabic Text Color */
+  --arabic-text: #ffffff;
+
+  /* Card Colors */
+  --card-bg: rgba(212, 175, 55, 0.08);
+  --card-border: rgba(212, 175, 55, 0.25);
+  --card-border-hover: rgba(212, 175, 55, 0.6);
+
+  /* Inverted Strip Colors (for stats section) */
+  --strip-bg: #ffffff;
+  --strip-text: #0a0a0a;
+
+  /* Golden Strip Colors */
+  --gold-strip-bg: linear-gradient(135deg, #1a1510 0%, #2a2015 50%, #1a1510 100%);
+  --gold-strip-border: rgba(212, 175, 55, 0.3);
+
+  /* Semantic Colors */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #3b82f6;
+}
+
+/* ============================================
+   LIGHT THEME
+   ============================================ */
+[data-theme="light"] {
+  /* Primary Colors - Cream/Ivory base */
+  --primary: #f8f6f0;
+  --primary-light: #ffffff;
+  --primary-dark: #ede9df;
+
+  /* Secondary Colors - Darker Gold for contrast */
+  --gold: #996515;
+  --gold-light: #b8860b;
+  --gold-dark: #7a5012;
+  --gold-muted: #a67c00;
+
+  /* Background Colors */
   --background: #ffffff;
-  --foreground: #171717;
+  --background-secondary: #f8f6f0;
+  --background-tertiary: #ede9df;
+
+  /* Text Colors */
+  --foreground: #1a1a1a;
+  --foreground-secondary: #3d3d3d;
+  --foreground-muted: #6b6b6b;
+
+  /* Arabic Text Color */
+  --arabic-text: #1a1a1a;
+
+  /* Card Colors */
+  --card-bg: rgba(153, 101, 21, 0.08);
+  --card-border: rgba(153, 101, 21, 0.25);
+  --card-border-hover: rgba(153, 101, 21, 0.5);
+
+  /* Inverted Strip Colors (for stats section) */
+  --strip-bg: #0a0a0a;
+  --strip-text: #ffffff;
+
+  /* Golden Strip Colors */
+  --gold-strip-bg: linear-gradient(135deg, #f5f0e6 0%, #ebe3d3 50%, #f5f0e6 100%);
+  --gold-strip-border: rgba(153, 101, 21, 0.2);
+
+  /* Semantic Colors */
+  --success: #059669;
+  --warning: #d97706;
+  --error: #dc2626;
+  --info: #2563eb;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: var(--primary);
+  --color-gold: var(--gold);
+  --font-sans: var(--font-inter);
+  --font-arabic: var(--font-amiri);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Base Styles */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+
+/* Global theme transition - applies to all theme-aware elements */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-duration: 300ms;
+  transition-timing-function: ease;
+}
+
+/* Disable transitions on page load to prevent flash */
+.no-transition,
+.no-transition *,
+.no-transition *::before,
+.no-transition *::after {
+  transition: none !important;
+}
+
+/**
+ * Arabic text styling
+ * Uses Amiri font for authentic Quranic text display
+ */
+.arabic-text {
+  font-family: var(--font-amiri), "Traditional Arabic", serif;
+  direction: rtl;
+  text-align: center;
+  line-height: 2;
+  color: var(--arabic-text);
+}
+
+/* Quran verse styling - larger and more prominent */
+.quran-verse {
+  font-family: var(--font-amiri), "Traditional Arabic", "Scheherazade New", serif;
+  direction: rtl;
+  text-align: right;
+  line-height: 2.5;
+  color: var(--arabic-text);
+  word-spacing: 0.1em;
+  letter-spacing: 0;
+}
+
+/* Verse end marker styling */
+.verse-marker {
+  font-family: var(--font-amiri), "Traditional Arabic", serif;
+  color: var(--gold);
+  font-size: 0.9em;
+  margin: 0 0.25em;
+}
+
+/* Royal brand text styling */
+.brand-text {
+  font-family: var(--font-amiri), "Traditional Arabic", serif;
+  letter-spacing: 0.05em;
+}
+
+/* Gold gradient text */
+.gold-gradient {
+  background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 50%, var(--gold-dark) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Gold border glow effect */
+.gold-glow {
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+}
+
+/* Smooth scrolling for the entire page */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Selection color */
+::selection {
+  background-color: var(--gold);
+  color: var(--primary);
+}
+
+/* ============================================
+   FORM INPUT STYLING
+   ============================================ */
+
+/* Ensure inputs have proper text color regardless of theme */
+input,
+textarea,
+select {
+  color: #1a1a1a !important;
+  background-color: #ffffff;
+  caret-color: #1a1a1a;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  color: #1a1a1a !important;
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gold-muted);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold);
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+/* Fade in and slide up animation */
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  opacity: 0;
+  animation: fade-in-up 0.8s ease-out forwards;
+}
+
+/* Slow bounce for scroll indicator */
+@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 2s ease-in-out infinite;
+}
+
+/* Fade in animation */
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  opacity: 0;
+  animation: fade-in 0.6s ease-out forwards;
+}
+
+/* Scale in animation */
+@keyframes scale-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  opacity: 0;
+  animation: scale-in 0.5s ease-out forwards;
+}
+
+/* ============================================
+   CARD HOVER EFFECTS
+   ============================================ */
+
+/* Daily card (Verse/Hadith of the day) hover glow effect */
+.daily-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.daily-card:hover {
+  border-color: var(--card-border-hover);
+  box-shadow: 
+    0 0 20px rgba(212, 175, 55, 0.15),
+    0 0 40px rgba(212, 175, 55, 0.1),
+    0 0 60px rgba(212, 175, 55, 0.05);
+  transform: translateY(-2px);
+}
+
+[data-theme="light"] .daily-card:hover {
+  box-shadow: 
+    0 0 20px rgba(153, 101, 21, 0.15),
+    0 0 40px rgba(153, 101, 21, 0.1),
+    0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Glow pulse animation for cards */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px rgba(212, 175, 55, 0.15),
+      0 0 40px rgba(212, 175, 55, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px rgba(212, 175, 55, 0.25),
+      0 0 60px rgba(212, 175, 55, 0.15);
+  }
+}
+
+.daily-card:hover .card-glow {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* Slide up animation for prompts/notifications */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* Slide down animation */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

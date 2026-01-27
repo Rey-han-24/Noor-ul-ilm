@@ -1,0 +1,242 @@
+// Prisma Schema for Noor ul Ilm Islamic App
+// Database: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String
+  role          UserRole  @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  bookmarks     Bookmark[]
+  donations     Donation[]
+  sessions      Session[]
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  token        String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+// ============================================
+// HADITH COLLECTIONS
+// ============================================
+
+model HadithCollection {
+  id              String   @id @default(cuid())
+  slug            String   @unique  // e.g., "bukhari", "muslim"
+  name            String   // "Sahih al-Bukhari"
+  nameArabic      String   // "صحيح البخاري"
+  compiler        String   // "Imam al-Bukhari"
+  compilerArabic  String?
+  description     String?
+  totalHadiths    Int      @default(0)
+  totalBooks      Int      @default(0)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  books           HadithBook[]
+  hadiths         Hadith[]
+}
+
+model HadithBook {
+  id              String   @id @default(cuid())
+  collectionId    String
+  bookNumber      Int
+  name            String
+  nameArabic      String?
+  totalHadiths    Int      @default(0)
+  startNumber     Int?     // First hadith number in book
+  endNumber       Int?     // Last hadith number in book
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  collection      HadithCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  hadiths         Hadith[]
+  
+  @@unique([collectionId, bookNumber])
+}
+
+model Hadith {
+  id                  String   @id @default(cuid())
+  collectionId        String
+  bookId              String?
+  hadithNumber        Int      // Unique within collection
+  hadithNumberInBook  Int?     // Number within book
+  
+  // Text content
+  arabicText          String   @db.Text
+  englishText         String   @db.Text
+  urduText            String?  @db.Text
+  
+  // Narrator chain
+  narratorChain       String?  @db.Text   // Full isnad
+  primaryNarrator     String?             // Main narrator name
+  primaryNarratorArabic String?
+  
+  // Grading
+  grade               HadithGrade @default(UNKNOWN)
+  gradedBy            String?
+  gradeNotes          String?
+  
+  // Reference
+  reference           String?  // e.g., "Bukhari 1"
+  inBookReference     String?  // e.g., "Book 1, Hadith 1"
+  
+  // Chapter/Topic
+  chapterNumber       Int?
+  chapterTitle        String?
+  chapterTitleArabic  String?
+  
+  // Metadata
+  topics              String[] // Tags for search
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  // Relations
+  collection          HadithCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  book                HadithBook?      @relation(fields: [bookId], references: [id])
+  
+  @@unique([collectionId, hadithNumber])
+  @@index([collectionId])
+  @@index([bookId])
+  @@index([grade])
+}
+
+enum HadithGrade {
+  SAHIH
+  HASAN
+  DAIF
+  MAWDU
+  UNKNOWN
+}
+
+// ============================================
+// BOOKMARKS & USER PROGRESS
+// ============================================
+
+model Bookmark {
+  id            String       @id @default(cuid())
+  userId        String
+  type          BookmarkType
+  
+  // Quran bookmark
+  surahNumber   Int?
+  ayahNumber    Int?
+  
+  // Hadith bookmark
+  collectionId  String?
+  hadithNumber  Int?
+  
+  note          String?
+  createdAt     DateTime     @default(now())
+  
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+}
+
+enum BookmarkType {
+  QURAN
+  HADITH
+}
+
+// ============================================
+// DONATIONS
+// ============================================
+
+model Donation {
+  id              String        @id @default(cuid())
+  userId          String?
+  amount          Decimal       @db.Decimal(10, 2)
+  currency        String        @default("USD")
+  status          DonationStatus @default(PENDING)
+  
+  // Payment details
+  paymentMethod   String?       // "stripe", "paypal"
+  transactionId   String?
+  
+  // Donor info (for anonymous donations)
+  donorName       String?
+  donorEmail      String?
+  isAnonymous     Boolean       @default(false)
+  
+  // Purpose
+  purpose         String?       // "general", "quran_project", "hadith_project"
+  message         String?
+  
+  createdAt       DateTime      @default(now())
+  completedAt     DateTime?
+  
+  user            User?         @relation(fields: [userId], references: [id])
+  
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum DonationStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+// ============================================
+// CONTENT MANAGEMENT
+// ============================================
+
+model ContentPage {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  content     String   @db.Text
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  action      String   // "CREATE_HADITH", "UPDATE_USER", etc.
+  entityType  String   // "Hadith", "User", etc.
+  entityId    String?
+  details     Json?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
