@@ -8,11 +8,12 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Metadata } from "next";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import prisma from "@/lib/prisma";
-import { HadithBook, Hadith } from "@/types/hadith";
-import { getCollectionBooks, getBookHadiths } from "@/lib/hadith-api";
+import Header from "@/frontend/components/Header";
+import Footer from "@/frontend/components/Footer";
+import HistoryRecorder from "@/frontend/components/HistoryRecorder";
+import prisma from "@/backend/lib/prisma";
+import { HadithBook, Hadith } from "@/shared/types/hadith";
+import { getCollectionBooks, getBookHadiths } from "@/backend/services/hadith-api";
 import HadithBookClient from "./HadithBookClient";
 
 interface PageProps {
@@ -107,6 +108,7 @@ export default async function BookPage({ params }: PageProps) {
   return (
     <div className="flex min-h-screen flex-col bg-[var(--background)]">
       <Header />
+      <HistoryRecorder type="HADITH" collectionId={collectionId} bookNumber={bookNumber} />
 
       <main className="flex-1">
         {/* Header Section */}

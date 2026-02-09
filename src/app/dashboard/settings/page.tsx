@@ -4,7 +4,7 @@
  * Styled with royal black & gold theme
  */
 
-import { getCurrentUser } from '@/lib/auth-server';
+import { getCurrentUser } from '@/backend/lib/auth-server';
 import { redirect } from 'next/navigation';
 
 export default async function SettingsPage() {

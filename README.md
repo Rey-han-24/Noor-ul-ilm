@@ -2,9 +2,10 @@
 
 > **Light of Knowledge** - A comprehensive Islamic web application
 
-[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
+[![Prisma](https://img.shields.io/badge/Prisma-5-2D3748?logo=prisma)](https://www.prisma.io/)
 
 ## 📖 About
 
@@ -15,31 +16,59 @@
 - 📖 **Al-Quran** - Complete Quran with Arabic text and translations in multiple languages
 - 📚 **Hadith Collections** - All major Hadith books (Bukhari, Muslim, Abu Dawud, etc.)
 - 🔍 **Smart Search** - Search through Quran verses and Hadiths
-- 👤 **User Accounts** - Save bookmarks and preferences
-- 💝 **Donate** - Support Islamic causes and charity
+- 👤 **User Accounts** - Save bookmarks, reading history, and preferences
+- � **Bookmarks** - Save your favorite verses and hadiths
+- 📜 **Reading History** - Continue where you left off
+- �💝 **Donate** - Support Islamic causes and charity
 - 🌙 **Beautiful UI** - Clean, respectful design with RTL support for Arabic
+- 🔐 **Admin Panel** - Manage content, users, and donations
 
 ## 🛠️ Tech Stack
 
-- **Framework:** Next.js 15+ (App Router)
-- **Language:** TypeScript (for type safety)
-- **Styling:** Tailwind CSS
+- **Framework:** Next.js 16+ (App Router, SSR/SSG)
+- **Language:** TypeScript (strict mode)
+- **Styling:** Tailwind CSS 4
+- **Database:** PostgreSQL with Prisma ORM
+- **Authentication:** JWT with HTTP-only cookies
 - **Fonts:** Inter (UI) + Amiri (Arabic)
 
 ## 📁 Project Structure
 
 ```
 src/
-├── app/                 # Next.js App Router pages
-│   ├── page.tsx         # Home page
-│   ├── layout.tsx       # Root layout
-│   └── globals.css      # Global styles
-├── components/          # Reusable UI components (coming soon)
-├── lib/                 # Utility functions and constants
-│   ├── constants.ts     # App configuration
-│   └── utils.ts         # Helper functions
-└── types/               # TypeScript type definitions
-    └── index.ts         # Shared types
+├── app/                    # Next.js App Router pages & API routes
+│   ├── api/                # REST API endpoints
+│   ├── quran/              # Quran reading pages
+│   ├── hadith/             # Hadith reading pages
+│   ├── dashboard/          # User dashboard
+│   ├── admin/              # Admin panel
+│   └── ...                 # Other pages
+│
+├── frontend/               # Client-side code
+│   ├── components/         # React components
+│   │   ├── quran/          # Quran-specific components
+│   │   ├── hadith/         # Hadith-specific components
+│   │   ├── search/         # Search components
+│   │   └── dashboard/      # Dashboard components
+│   ├── hooks/              # Custom React hooks
+│   └── styles/             # CSS styles
+│
+├── backend/                # Server-side code
+│   ├── lib/                # Server utilities (Prisma, auth)
+│   ├── services/           # API services (Quran, Hadith, Search)
+│   ├── data/               # Local data files
+│   └── api/                # API helpers
+│
+├── shared/                 # Shared between frontend & backend
+│   ├── types/              # TypeScript type definitions
+│   ├── utils/              # Shared utilities
+│   └── constants/          # App constants
+│
+├── middleware.ts           # Next.js middleware
+│
+prisma/
+├── schema.prisma           # Database schema
+└── migrations/             # Database migrations
 ```
 
 ## 🚀 Getting Started
@@ -47,14 +76,15 @@ src/
 ### Prerequisites
 
 - Node.js 18+ 
+- PostgreSQL database
 - npm or yarn
 
 ### Installation
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/noor-ul-ilm.git
-   cd noor-ul-ilm
+   git clone https://github.com/Rey-han-24/Noor-ul-ilm.git
+   cd Noor-ul-ilm
    ```
 
 2. Install dependencies:

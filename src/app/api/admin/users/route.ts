@@ -8,9 +8,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import prisma from '@/backend/lib/prisma';
 import bcrypt from 'bcryptjs';
-import { requireAdmin, requireSuperAdmin, isErrorResponse, logSecurityEvent } from '@/lib/api-security';
+import { requireAdmin, requireSuperAdmin, isErrorResponse, logSecurityEvent } from '@/backend/lib/api-security';
 
 /** Request body for creating a user */
 interface CreateUserBody {

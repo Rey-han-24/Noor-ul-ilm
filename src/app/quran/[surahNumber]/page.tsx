@@ -9,10 +9,10 @@
 
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import { SURAH_LIST } from "@/types/quran";
-import { getSurahWithTranslation } from "@/lib/quran-api";
+import Header from "@/frontend/components/Header";
+import Footer from "@/frontend/components/Footer";
+import { SURAH_LIST } from "@/shared/types/quran";
+import { getSurahWithTranslation } from "@/backend/services/quran-api";
 import SurahPageClient from "./SurahPageClient";
 
 interface PageProps {

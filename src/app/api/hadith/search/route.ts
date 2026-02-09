@@ -10,7 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { searchAllHadiths } from "@/data/hadiths";
+import { searchAllHadiths } from "@/backend/data/hadiths";
 
 export async function GET(request: NextRequest) {
   try {

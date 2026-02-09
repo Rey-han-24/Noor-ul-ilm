@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/backend/lib/db';
 
 /** Route parameters */
 interface RouteParams {
@@ -37,7 +37,7 @@ export async function GET(
         name: true,
         nameArabic: true,
         slug: true,
-        author: true,
+        compiler: true,
         totalHadiths: true,
       },
     });
@@ -73,10 +73,10 @@ export async function GET(
           hadithNumber: true,
           arabicText: true,
           englishText: true,
-          narrator: true,
+          primaryNarrator: true,
           grade: true,
-          gradeSource: true,
-          chapter: true,
+          gradedBy: true,
+          chapterTitle: true,
           reference: true,
           book: {
             select: {
@@ -88,7 +88,7 @@ export async function GET(
           },
         },
         orderBy: [
-          { book: { order: 'asc' } },
+          { book: { bookNumber: 'asc' } },
           { hadithNumber: 'asc' },
         ],
         skip: (page - 1) * limit,
@@ -107,7 +107,7 @@ export async function GET(
         bookNumber: true,
         totalHadiths: true,
       },
-      orderBy: { order: 'asc' },
+      orderBy: { bookNumber: 'asc' },
     });
 
     return NextResponse.json({

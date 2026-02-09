@@ -3,13 +3,14 @@
  * 
  * Client-side wrapper for the Hadith book reading page.
  * Handles bookmark state and reading controls.
+ * Syncs bookmarks to both localStorage and server API.
  */
 
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Hadith, HadithBookmark } from "@/types/hadith";
-import HadithCard from "@/components/hadith/HadithCard";
+import { Hadith, HadithBookmark } from "@/shared/types/hadith";
+import HadithCard from "@/frontend/components/hadith/HadithCard";
 
 interface HadithBookClientProps {
   /** Array of hadiths to display */
@@ -43,12 +44,57 @@ function getSavedBookmark(): HadithBookmark | null {
 /**
  * Save bookmark to localStorage
  */
-function saveBookmark(bookmark: HadithBookmark): void {
+function saveBookmarkLocal(bookmark: HadithBookmark): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(HADITH_BOOKMARK_KEY, JSON.stringify(bookmark));
   } catch {
     // Ignore storage errors
+  }
+}
+
+/**
+ * Save bookmark to server API
+ */
+async function saveBookmarkToServer(bookmark: HadithBookmark): Promise<boolean> {
+  try {
+    const response = await fetch('/api/bookmarks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'HADITH',
+        collectionId: bookmark.collectionId,
+        bookNumber: bookmark.bookNumber,
+        hadithNumber: bookmark.hadithNumber,
+      }),
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Remove bookmark from server API
+ */
+async function removeBookmarkFromServer(
+  collectionId: string,
+  bookNumber: number,
+  hadithNumber: number
+): Promise<boolean> {
+  try {
+    const params = new URLSearchParams({
+      type: 'HADITH',
+      collectionId,
+      bookNumber: bookNumber.toString(),
+      hadithNumber: hadithNumber.toString(),
+    });
+    const response = await fetch(`/api/bookmarks?${params}`, {
+      method: 'DELETE',
+    });
+    return response.ok;
+  } catch {
+    return false;
   }
 }
 
@@ -125,10 +171,13 @@ export default function HadithBookClient({
       ) {
         setBookmark(null);
         localStorage.removeItem(HADITH_BOOKMARK_KEY);
+        // Also remove from server
+        removeBookmarkFromServer(collectionId, bookNumber, hadith.hadithNumber);
         setToastMessage("Bookmark removed");
       } else {
-        // Save new bookmark
-        saveBookmark(newBookmark);
+        // Save new bookmark to both local and server
+        saveBookmarkLocal(newBookmark);
+        saveBookmarkToServer(newBookmark);
         setBookmark(newBookmark);
         setToastMessage(`Bookmarked ${collectionName} ${hadith.hadithNumber}`);
       }

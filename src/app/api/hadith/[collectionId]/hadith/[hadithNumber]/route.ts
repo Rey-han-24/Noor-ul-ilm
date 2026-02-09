@@ -5,8 +5,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { fetchHadithByNumber } from "@/lib/hadith-external-api";
-import { getHadith } from "@/lib/hadith-api";
+import { fetchHadithByNumber } from "@/backend/services/hadith-external-api";
+import { getHadith } from "@/backend/services/hadith-api";
 
 interface RouteParams {
   params: Promise<{ collectionId: string; hadithNumber: string }>;

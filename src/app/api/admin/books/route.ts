@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/backend/lib/db';
 
 /** Request body for creating a book */
 interface CreateBookBody {
@@ -40,8 +40,8 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: [
-        { collection: { order: 'asc' } },
-        { order: 'asc' },
+        { collection: { name: 'asc' } },
+        { bookNumber: 'asc' },
       ],
     });
 
@@ -93,11 +93,10 @@ export async function POST(request: NextRequest) {
     const book = await prisma.hadithBook.create({
       data: {
         name: body.name,
-        nameArabic: body.nameArabic,
+        nameArabic: body.nameArabic || null,
         collectionId: body.collectionId,
-        bookNumber: body.bookNumber,
+        bookNumber: body.bookNumber || 1,
         totalHadiths: body.totalHadiths || 0,
-        order: body.order ?? 0,
       },
       include: {
         collection: true,

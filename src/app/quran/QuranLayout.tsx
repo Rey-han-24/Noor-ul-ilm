@@ -9,9 +9,9 @@
 
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import SurahSidebar from "@/components/quran/SurahSidebar";
+import Header from "@/frontend/components/Header";
+import Footer from "@/frontend/components/Footer";
+import SurahSidebar from "@/frontend/components/quran/SurahSidebar";
 
 export default function QuranLayout({
   children,

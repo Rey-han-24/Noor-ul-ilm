@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Amiri, Inter } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeProvider } from "@/frontend/components/ThemeProvider";
 
 /**
  * Inter - Clean, modern font for English/UI text

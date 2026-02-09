@@ -5,9 +5,9 @@
  */
 
 import { redirect } from 'next/navigation';
-import { getCurrentUser, isAdmin } from '@/lib/auth-server';
-import Header from '@/components/Header';
-import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
+import { getCurrentUser, isAdmin } from '@/backend/lib/auth-server';
+import Header from '@/frontend/components/Header';
+import DashboardSidebar from '@/frontend/components/dashboard/DashboardSidebar';
 
 export default async function DashboardLayout({
   children,

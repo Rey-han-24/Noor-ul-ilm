@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth-server';
+import { getCurrentUser } from '@/backend/lib/auth-server';
 
 export async function GET() {
   try {

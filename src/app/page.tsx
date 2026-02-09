@@ -8,10 +8,10 @@
  * - Fully responsive design
  */
 
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import Header from "@/frontend/components/Header";
+import Footer from "@/frontend/components/Footer";
 import Link from "next/link";
-import { getDailyVerse, getDailyHadith } from "@/lib/daily-content";
+import { getDailyVerse, getDailyHadith } from "@/backend/services/daily-content";
 
 /**
  * Feature card data for the main sections of the app

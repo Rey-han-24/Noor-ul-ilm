@@ -5,7 +5,7 @@
  */
 
 import Link from 'next/link';
-import { getCurrentUser, isAdmin } from '@/lib/auth-server';
+import { getCurrentUser, isAdmin } from '@/backend/lib/auth-server';
 import { redirect } from 'next/navigation';
 
 export default async function DashboardPage() {

@@ -3,9 +3,9 @@
  * Styled with royal black & gold theme
  */
 
-import { getCurrentUser, isAdmin } from '@/lib/auth-server';
+import { getCurrentUser, isAdmin } from '@/backend/lib/auth-server';
 import { redirect } from 'next/navigation';
-import prisma from '@/lib/prisma';
+import prisma from '@/backend/lib/prisma';
 import Link from 'next/link';
 
 export default async function AdminHadithsPage() {

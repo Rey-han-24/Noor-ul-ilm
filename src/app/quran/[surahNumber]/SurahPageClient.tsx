@@ -9,11 +9,11 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import SurahSidebar from "@/components/quran/SurahSidebar";
-import SurahReader from "@/components/quran/SurahReader";
-import { SurahDetail, AyahTranslation, Surah } from "@/types/quran";
+import SurahSidebar from "@/frontend/components/quran/SurahSidebar";
+import SurahReader from "@/frontend/components/quran/SurahReader";
+import { SurahDetail, AyahTranslation, Surah } from "@/shared/types/quran";
 
 interface SurahPageClientProps {
   surah: SurahDetail;
@@ -61,6 +61,30 @@ export default function SurahPageClient({
 }: SurahPageClientProps) {
   const [sidebarOpen, setSidebarOpen] = useState<boolean | null>(null);
   const [isDesktop, setIsDesktop] = useState(false);
+  const hasRecordedHistory = useRef(false);
+
+  // Record reading history on mount
+  useEffect(() => {
+    if (hasRecordedHistory.current) return;
+    
+    const recordHistory = async () => {
+      try {
+        await fetch('/api/history', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'QURAN',
+            surahNumber: surah.number,
+          }),
+        });
+        hasRecordedHistory.current = true;
+      } catch {
+        // Silent fail - user might not be logged in
+      }
+    };
+    
+    recordHistory();
+  }, [surah.number]);
 
   // Initialize sidebar state from localStorage or default to OPEN for new users
   useEffect(() => {

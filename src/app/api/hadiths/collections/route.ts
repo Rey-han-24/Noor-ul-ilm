@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/backend/lib/db';
 
 /**
  * GET /api/hadiths/collections
@@ -19,13 +19,12 @@ export async function GET() {
         name: true,
         nameArabic: true,
         slug: true,
-        author: true,
-        authorArabic: true,
+        compiler: true,
+        compilerArabic: true,
         description: true,
         totalHadiths: true,
-        order: true,
       },
-      orderBy: { order: 'asc' },
+      orderBy: { name: 'asc' },
     });
 
     return NextResponse.json({

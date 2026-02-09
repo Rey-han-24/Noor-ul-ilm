@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { HADITH_COLLECTIONS } from "@/types/hadith";
+import { HADITH_COLLECTIONS } from "@/shared/types/hadith";
 
 export async function GET() {
   try {

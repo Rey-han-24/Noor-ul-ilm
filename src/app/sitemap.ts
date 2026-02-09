@@ -6,8 +6,8 @@
  */
 
 import { MetadataRoute } from 'next';
-import { SURAH_LIST } from '@/types/quran';
-import prisma from '@/lib/prisma';
+import { SURAH_LIST } from '@/shared/types/quran';
+import prisma from '@/backend/lib/prisma';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://noorulilm.com';

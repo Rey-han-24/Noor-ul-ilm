@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/backend/lib/db';
 import { HadithGrade } from '@prisma/client';
 
 /** Route parameters */
@@ -20,12 +20,12 @@ interface UpdateHadithBody {
   hadithNumber?: number;
   arabicText?: string;
   englishText?: string;
-  narrator?: string;
+  primaryNarrator?: string;
   narratorChain?: string;
   grade?: HadithGrade;
-  gradeSource?: string;
+  gradedBy?: string;
   bookId?: string;
-  chapter?: string;
+  chapterTitle?: string;
   reference?: string;
   inBookReference?: string;
 }
@@ -125,12 +125,12 @@ export async function PUT(
         hadithNumber: body.hadithNumber,
         arabicText: body.arabicText,
         englishText: body.englishText,
-        narrator: body.narrator,
+        primaryNarrator: body.primaryNarrator,
         narratorChain: body.narratorChain,
         grade: body.grade,
-        gradeSource: body.gradeSource,
+        gradedBy: body.gradedBy,
         bookId: body.bookId,
-        chapter: body.chapter,
+        chapterTitle: body.chapterTitle,
         reference: body.reference,
         inBookReference: body.inBookReference,
       },

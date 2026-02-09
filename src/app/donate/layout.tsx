@@ -4,8 +4,8 @@
  * Server component wrapper providing Header and Footer
  */
 
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import Header from "@/frontend/components/Header";
+import Footer from "@/frontend/components/Footer";
 
 export default function DonateLayout({
   children,

@@ -15,28 +15,29 @@ datasource db {
 // ============================================
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String?
-  password      String
-  role          UserRole  @default(USER)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  bookmarks     Bookmark[]
-  donations     Donation[]
-  sessions      Session[]
+  bookmarks      Bookmark[]
+  donations      Donation[]
+  sessions       Session[]
+  readingHistory ReadingHistory[]
 }
 
 model Session {
-  id           String   @id @default(cuid())
-  userId       String
-  token        String   @unique
-  expiresAt    DateTime
-  createdAt    DateTime @default(now())
-  
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum UserRole {
@@ -50,84 +51,84 @@ enum UserRole {
 // ============================================
 
 model HadithCollection {
-  id              String   @id @default(cuid())
-  slug            String   @unique  // e.g., "bukhari", "muslim"
-  name            String   // "Sahih al-Bukhari"
-  nameArabic      String   // "صحيح البخاري"
-  compiler        String   // "Imam al-Bukhari"
-  compilerArabic  String?
-  description     String?
-  totalHadiths    Int      @default(0)
-  totalBooks      Int      @default(0)
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+  id             String   @id @default(cuid())
+  slug           String   @unique // e.g., "bukhari", "muslim"
+  name           String // "Sahih al-Bukhari"
+  nameArabic     String // "صحيح البخاري"
+  compiler       String // "Imam al-Bukhari"
+  compilerArabic String?
+  description    String?
+  totalHadiths   Int      @default(0)
+  totalBooks     Int      @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
   // Relations
-  books           HadithBook[]
-  hadiths         Hadith[]
+  books   HadithBook[]
+  hadiths Hadith[]
 }
 
 model HadithBook {
-  id              String   @id @default(cuid())
-  collectionId    String
-  bookNumber      Int
-  name            String
-  nameArabic      String?
-  totalHadiths    Int      @default(0)
-  startNumber     Int?     // First hadith number in book
-  endNumber       Int?     // Last hadith number in book
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+  id           String   @id @default(cuid())
+  collectionId String
+  bookNumber   Int
+  name         String
+  nameArabic   String?
+  totalHadiths Int      @default(0)
+  startNumber  Int? // First hadith number in book
+  endNumber    Int? // Last hadith number in book
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
   // Relations
-  collection      HadithCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-  hadiths         Hadith[]
-  
+  collection HadithCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  hadiths    Hadith[]
+
   @@unique([collectionId, bookNumber])
 }
 
 model Hadith {
-  id                  String   @id @default(cuid())
-  collectionId        String
-  bookId              String?
-  hadithNumber        Int      // Unique within collection
-  hadithNumberInBook  Int?     // Number within book
-  
+  id                 String  @id @default(cuid())
+  collectionId       String
+  bookId             String?
+  hadithNumber       Int // Unique within collection
+  hadithNumberInBook Int? // Number within book
+
   // Text content
-  arabicText          String   @db.Text
-  englishText         String   @db.Text
-  urduText            String?  @db.Text
-  
+  arabicText  String  @db.Text
+  englishText String  @db.Text
+  urduText    String? @db.Text
+
   // Narrator chain
-  narratorChain       String?  @db.Text   // Full isnad
-  primaryNarrator     String?             // Main narrator name
+  narratorChain         String? @db.Text // Full isnad
+  primaryNarrator       String? // Main narrator name
   primaryNarratorArabic String?
-  
+
   // Grading
-  grade               HadithGrade @default(UNKNOWN)
-  gradedBy            String?
-  gradeNotes          String?
-  
+  grade      HadithGrade @default(UNKNOWN)
+  gradedBy   String?
+  gradeNotes String?
+
   // Reference
-  reference           String?  // e.g., "Bukhari 1"
-  inBookReference     String?  // e.g., "Book 1, Hadith 1"
-  
+  reference       String? // e.g., "Bukhari 1"
+  inBookReference String? // e.g., "Book 1, Hadith 1"
+
   // Chapter/Topic
-  chapterNumber       Int?
-  chapterTitle        String?
-  chapterTitleArabic  String?
-  
+  chapterNumber      Int?
+  chapterTitle       String?
+  chapterTitleArabic String?
+
   // Metadata
-  topics              String[] // Tags for search
-  isActive            Boolean  @default(true)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  
+  topics    String[] // Tags for search
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relations
-  collection          HadithCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-  book                HadithBook?      @relation(fields: [bookId], references: [id])
-  
+  collection HadithCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  book       HadithBook?      @relation(fields: [bookId], references: [id])
+
   @@unique([collectionId, hadithNumber])
   @@index([collectionId])
   @@index([bookId])
@@ -147,23 +148,23 @@ enum HadithGrade {
 // ============================================
 
 model Bookmark {
-  id            String       @id @default(cuid())
-  userId        String
-  type          BookmarkType
-  
+  id     String       @id @default(cuid())
+  userId String
+  type   BookmarkType
+
   // Quran bookmark
-  surahNumber   Int?
-  ayahNumber    Int?
-  
+  surahNumber Int?
+  ayahNumber  Int?
+
   // Hadith bookmark
-  collectionId  String?
-  hadithNumber  Int?
-  
-  note          String?
-  createdAt     DateTime     @default(now())
-  
-  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  collectionId String?
+  hadithNumber Int?
+
+  note      String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
 }
 
@@ -172,35 +173,64 @@ enum BookmarkType {
   HADITH
 }
 
+model ReadingHistory {
+  id     String       @id @default(cuid())
+  userId String
+  type   BookmarkType
+
+  // Quran reading
+  surahNumber Int?
+  ayahNumber  Int? // Last ayah read
+
+  // Hadith reading
+  collectionId String?
+  bookNumber   Int?
+  hadithNumber Int?
+
+  // Progress tracking
+  progress Float @default(0) // Percentage complete
+
+  lastReadAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type, surahNumber])
+  @@unique([userId, type, collectionId, bookNumber])
+  @@index([userId])
+  @@index([lastReadAt])
+}
+
 // ============================================
 // DONATIONS
 // ============================================
 
 model Donation {
-  id              String        @id @default(cuid())
-  userId          String?
-  amount          Decimal       @db.Decimal(10, 2)
-  currency        String        @default("USD")
-  status          DonationStatus @default(PENDING)
-  
+  id       String         @id @default(cuid())
+  userId   String?
+  amount   Decimal        @db.Decimal(10, 2)
+  currency String         @default("USD")
+  status   DonationStatus @default(PENDING)
+
   // Payment details
-  paymentMethod   String?       // "stripe", "paypal"
-  transactionId   String?
-  
+  paymentMethod String? // "stripe", "paypal"
+  transactionId String?
+
   // Donor info (for anonymous donations)
-  donorName       String?
-  donorEmail      String?
-  isAnonymous     Boolean       @default(false)
-  
+  donorName   String?
+  donorEmail  String?
+  isAnonymous Boolean @default(false)
+
   // Purpose
-  purpose         String?       // "general", "quran_project", "hadith_project"
-  message         String?
-  
-  createdAt       DateTime      @default(now())
-  completedAt     DateTime?
-  
-  user            User?         @relation(fields: [userId], references: [id])
-  
+  purpose String? // "general", "quran_project", "hadith_project"
+  message String?
+
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  user User? @relation(fields: [userId], references: [id])
+
   @@index([status])
   @@index([createdAt])
 }
@@ -210,6 +240,18 @@ enum DonationStatus {
   COMPLETED
   FAILED
   REFUNDED
+}
+
+// ============================================
+// SITE SETTINGS
+// ============================================
+
+model SiteSettings {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ============================================
@@ -227,15 +269,15 @@ model ContentPage {
 }
 
 model AuditLog {
-  id          String   @id @default(cuid())
-  userId      String?
-  action      String   // "CREATE_HADITH", "UPDATE_USER", etc.
-  entityType  String   // "Hadith", "User", etc.
-  entityId    String?
-  details     Json?
-  ipAddress   String?
-  createdAt   DateTime @default(now())
-  
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String // "CREATE_HADITH", "UPDATE_USER", etc.
+  entityType String // "Hadith", "User", etc.
+  entityId   String?
+  details    Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
   @@index([userId])
   @@index([action])
   @@index([createdAt])

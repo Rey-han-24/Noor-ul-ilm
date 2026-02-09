@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getCollectionBooks } from "@/lib/hadith-api";
+import { getCollectionBooks } from "@/backend/services/hadith-api";
 
 interface RouteParams {
   params: Promise<{ collectionId: string }>;

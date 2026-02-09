@@ -9,10 +9,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
-import prisma from '@/lib/prisma';
-import { createToken, AUTH_COOKIE_NAME } from '@/lib/auth';
+import prisma from '@/backend/lib/prisma';
+import { createToken, AUTH_COOKIE_NAME } from '@/shared/utils/auth';
 import { UserRole } from '@prisma/client';
-import { checkRateLimit, getClientIp, logSecurityEvent, sanitizeInput, isValidEmail } from '@/lib/api-security';
+import { checkRateLimit, getClientIp, logSecurityEvent, sanitizeInput, isValidEmail } from '@/backend/lib/api-security';
 
 export async function POST(request: NextRequest) {
   const clientIp = getClientIp(request);

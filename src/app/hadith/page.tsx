@@ -7,10 +7,10 @@
 
 import Link from "next/link";
 import { Metadata } from "next";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import prisma from "@/lib/prisma";
-import { HADITH_COLLECTIONS } from "@/types/hadith";
+import Header from "@/frontend/components/Header";
+import Footer from "@/frontend/components/Footer";
+import prisma from "@/backend/lib/prisma";
+import { HADITH_COLLECTIONS } from "@/shared/types/hadith";
 
 export const metadata: Metadata = {
   title: "Hadith Collections | Noor ul Ilm",

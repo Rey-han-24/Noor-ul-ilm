@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { fetchMinifiedCollection } from "@/lib/hadith-external-api";
+import { fetchMinifiedCollection } from "@/backend/services/hadith-external-api";
 
 // Collection mapping for external API
 const COLLECTION_MAP: Record<string, { name: string; nameArabic: string; compiler: string }> = {

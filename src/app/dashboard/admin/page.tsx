@@ -4,10 +4,10 @@
  * Styled with royal black & gold theme
  */
 
-import { getCurrentUser, isAdmin } from '@/lib/auth-server';
+import { getCurrentUser, isAdmin } from '@/backend/lib/auth-server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import prisma from '@/lib/prisma';
+import prisma from '@/backend/lib/prisma';
 
 export default async function AdminDashboardPage() {
   const user = await getCurrentUser();

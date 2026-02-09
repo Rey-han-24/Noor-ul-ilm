@@ -7,8 +7,8 @@
 
 import Link from "next/link";
 import { Metadata } from "next";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import Header from "@/frontend/components/Header";
+import Footer from "@/frontend/components/Footer";
 
 export const metadata: Metadata = {
   title: "Page Not Found",

@@ -6,7 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { AUTH_COOKIE_NAME } from '@/lib/auth';
+import { AUTH_COOKIE_NAME } from '@/shared/utils/auth';
 
 export async function POST() {
   try {

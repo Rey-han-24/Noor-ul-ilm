@@ -15,19 +15,19 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { SearchResultCard } from "@/components/search/SearchResultCard";
+import { SearchResultCard } from "@/frontend/components/search/SearchResultCard";
 import {
   SearchResult,
   SearchFilter,
   RecentSearch,
-} from "@/types/search";
+} from "@/shared/types/search";
 import {
   search,
   getRecentSearches,
   saveRecentSearch,
   clearRecentSearches,
   getSearchSuggestions,
-} from "@/lib/search-api";
+} from "@/backend/services/search-api";
 
 /**
  * Filter tabs configuration

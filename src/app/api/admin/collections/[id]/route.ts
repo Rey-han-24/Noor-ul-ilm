@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/backend/lib/db';
 
 /** Route parameters */
 interface RouteParams {
@@ -19,11 +19,10 @@ interface UpdateCollectionBody {
   name?: string;
   nameArabic?: string;
   slug?: string;
-  author?: string;
-  authorArabic?: string;
+  compiler?: string;
+  compilerArabic?: string;
   description?: string;
   totalHadiths?: number;
-  order?: number;
 }
 
 /**
@@ -48,7 +47,7 @@ export async function GET(
               },
             },
           },
-          orderBy: { order: 'asc' },
+          orderBy: { bookNumber: 'asc' },
         },
       },
     });
@@ -115,11 +114,10 @@ export async function PUT(
         name: body.name,
         nameArabic: body.nameArabic,
         slug: body.slug,
-        author: body.author,
-        authorArabic: body.authorArabic,
+        compiler: body.compiler,
+        compilerArabic: body.compilerArabic,
         description: body.description,
         totalHadiths: body.totalHadiths,
-        order: body.order,
       },
     });
 

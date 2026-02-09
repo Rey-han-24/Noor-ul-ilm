@@ -9,7 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getBookHadiths } from "@/lib/hadith-api";
+import { getBookHadiths } from "@/backend/services/hadith-api";
 
 interface RouteParams {
   params: Promise<{ collectionId: string; bookNumber: string }>;
