@@ -11,7 +11,7 @@ This document outlines the security measures implemented in the Noor ul Ilm appl
 
 | Feature | Implementation | File |
 |---------|---------------|------|
-| JWT Tokens | Signed with secret key, 7-day expiry | `src/lib/auth.ts` |
+| JWT Tokens | Signed with secret key, 7-day expiry | `src/shared/utils/auth.ts` |
 | HTTP-only Cookies | Prevents XSS access to tokens | All auth routes |
 | Secure Flag | HTTPS only in production | All auth routes |
 | SameSite | 'lax' - CSRF protection | All auth routes |
