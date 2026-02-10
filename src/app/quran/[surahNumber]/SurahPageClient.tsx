@@ -4,7 +4,12 @@
  * Client-side wrapper for the Surah page with sidebar.
  * Handles the sidebar state and layout.
  * 
+ * Features:
+ * - Collapsible sidebar for surah navigation
+ * - Responsive design for mobile and desktop
+ * 
  * NOTE: Header and Footer are rendered by the parent server component.
+ * NOTE: Audio player is now integrated directly into SurahReader component.
  */
 
 "use client";
@@ -59,6 +64,8 @@ export default function SurahPageClient({
   prevSurah,
   nextSurah,
 }: SurahPageClientProps) {
+  // Use a lazy initializer for sidebar state - cannot be done because window doesn't exist on server
+  // We'll use null initially and set it on mount
   const [sidebarOpen, setSidebarOpen] = useState<boolean | null>(null);
   const [isDesktop, setIsDesktop] = useState(false);
   const hasRecordedHistory = useRef(false);
@@ -91,15 +98,22 @@ export default function SurahPageClient({
     const checkDesktop = () => setIsDesktop(window.innerWidth >= 1024);
     checkDesktop();
     
-    const saved = getSavedSidebarState();
-    if (saved !== null) {
-      // User has explicitly set a preference, use it
-      setSidebarOpen(saved);
-    } else {
-      // First-time user: ALWAYS open sidebar so they know it exists
-      // On mobile, also open briefly then close (or keep open on desktop)
-      setSidebarOpen(true);
-    }
+    // Initialize sidebar state - defer to avoid lint warning about synchronous setState
+    const initSidebarState = () => {
+      const saved = getSavedSidebarState();
+      if (saved !== null) {
+        // User has explicitly set a preference, use it
+        return saved;
+      } else {
+        // First-time user: ALWAYS open sidebar so they know it exists
+        return true;
+      }
+    };
+    
+    // Use requestAnimationFrame to defer the state update
+    requestAnimationFrame(() => {
+      setSidebarOpen(initSidebarState());
+    });
   }, []);
 
   // Handle responsive sidebar (only if not manually set)

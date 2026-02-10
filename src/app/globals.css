@@ -385,3 +385,28 @@ select:focus {
     transform: translateY(0);
   }
 }
+
+/* ============================================
+   AUDIO PLAYER STYLES
+   ============================================ */
+
+/* Audio highlight animation for currently playing verse */
+@keyframes audioHighlight {
+  0% {
+    background-color: rgba(212, 175, 55, 0.2);
+    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.4);
+  }
+  50% {
+    background-color: rgba(212, 175, 55, 0.1);
+    box-shadow: 0 0 20px 0 rgba(212, 175, 55, 0.2);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: none;
+  }
+}
+
+.audio-highlight {
+  animation: audioHighlight 2s ease-out;
+  border-left: 3px solid var(--gold) !important;
+}
