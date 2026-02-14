@@ -1,7 +1,7 @@
 # 🗺️ Noor ul Ilm - Development Roadmap
 
-> **Last Updated:** February 9, 2026  
-> **Version:** 1.0.0  
+> **Last Updated:** February 11, 2026  
+> **Version:** 1.2.0  
 > **Status:** Active Development
 
 ---
@@ -28,14 +28,15 @@
 - [x] About & Contact pages
 - [x] Security features (rate limiting, input validation)
 - [x] Project restructuring (frontend/backend/shared folders)
+- [x] Audio recitation (per-verse play/pause, full surah playback, 8 reciters)
+- [x] Tafsir integration (12 tafsir sources, English/Arabic/Urdu, Quran.com API v4)
+- [x] Full hadith data import (7 collections via CDN + Nawawi local, Arabic + English)
 
 ### 🔄 In Progress
 - [ ] Payment integration for donations
-- [ ] Audio recitation for Quran
-- [ ] Full hadith data import
+- [ ] Enhanced hadith display
 
 ### ❌ Not Started
-- [ ] Tafsir (Quran commentary)
 - [ ] Prayer times
 - [ ] Islamic calendar
 - [ ] Community features
@@ -51,18 +52,20 @@
 **Timeline: Week 1-2**
 
 #### 1.1 Quran Features
-- [ ] **Audio Recitation**
-  - [ ] Integrate audio player component
-  - [ ] Add multiple reciter options (Mishary, Abdul Basit, etc.)
-  - [ ] Implement verse-by-verse playback
-  - [ ] Add autoplay next verse feature
-  - [ ] Create `/api/quran/audio/[surah]/[ayah]` endpoint
+- [x] **Audio Recitation** ✅
+  - [x] Integrate audio player component (per-verse play buttons)
+  - [x] Add multiple reciter options (8 reciters: Mishary, Abdul Basit, Al-Husary, Minshawi, Sudais, Shuraim, Ajmy, Maher Al-Muaiqly)
+  - [x] Implement verse-by-verse playback with pause/resume
+  - [x] Add full surah playback with progress tracking
+  - [x] Audio via cdn.islamic.network (no custom API endpoint needed)
   
-- [ ] **Tafsir Integration**
-  - [ ] Create Tafsir model in database
-  - [ ] Add tafsir selector (Ibn Kathir, Jalalayn, etc.)
-  - [ ] Create tafsir display component
-  - [ ] Create `/api/quran/tafsir/[surah]/[ayah]` endpoint
+- [x] **Tafsir Integration** ✅
+  - [x] Create tafsir types and source definitions (12 tafsir sources)
+  - [x] Add tafsir selector (Ibn Kathir, Ma'arif al-Qur'an, Tazkirul Quran, Tabari, Sa'di, Qurtubi, Baghawi, Muyassar + 3 Urdu)
+  - [x] Create TafsirPanel display component with expandable/collapsible UI
+  - [x] Create `/api/quran/tafsir` endpoint (Quran.com API v4)
+  - [x] Backend service with caching (1hr TTL) and HTML sanitization
+  - [x] Support for English, Arabic, and Urdu tafsir sources
 
 - [ ] **Enhanced Reading Experience**
   - [ ] Word-by-word translation
@@ -71,15 +74,16 @@
   - [ ] Night mode optimization
 
 #### 1.2 Hadith Features
-- [ ] **Complete Data Import**
-  - [ ] Import all Bukhari hadiths (7,275)
-  - [ ] Import all Muslim hadiths (7,563)
-  - [ ] Import Abu Dawud (5,274)
-  - [ ] Import Tirmidhi (3,956)
-  - [ ] Import Nasai (5,758)
-  - [ ] Import Ibn Majah (4,341)
-  - [ ] Import Malik's Muwatta (1,832)
-  - [ ] Import 40 Nawawi (42)
+- [x] **Complete Data Import** ✅
+  - [x] CDN integration rewrite (fawazahmed0/hadith-api, proper section-based fetching)
+  - [x] Fixed CDN URL structure (/editions/{edition}/sections/{sectionNo} for books)
+  - [x] All 7 collections live via CDN: Bukhari (7,275), Muslim (7,563), Abu Dawud (5,274), Tirmidhi (3,956), Nasai (5,758), Ibn Majah (4,341), Malik's Muwatta (1,832)
+  - [x] 40 Nawawi (42) — local curated data
+  - [x] Arabic text fetched alongside English from CDN (parallel requests)
+  - [x] Collection info.json for accurate book counts and section metadata
+  - [x] Efficient section-based caching (2hr TTL in-memory)
+  - [x] Fallback chain: local data → CDN section → CDN single hadith → CDN full collection
+  - [x] Single hadith endpoint for efficient individual lookups
 
 - [ ] **Enhanced Hadith Display**
   - [ ] Full narrator chain display

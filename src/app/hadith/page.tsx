@@ -27,16 +27,35 @@ interface CollectionDisplay {
   description: string | null;
   totalHadiths: number;
   totalBooks: number;
+  /** Sort priority — lower = shown first */
+  sortOrder: number;
 }
 
+/** Predefined sort order: Sahih collections first, then Sunan, then others */
+const COLLECTION_SORT_ORDER: Record<string, number> = {
+  bukhari: 1,
+  muslim: 2,
+  tirmidhi: 3,
+  abudawud: 4,
+  nasai: 5,
+  ibnmajah: 6,
+  malik: 7,
+  nawawi: 8,
+};
+
 /**
- * Fetch collections from database
+ * Fetch collections from database, merged with static data
+ * Static HADITH_COLLECTIONS provides reliable book counts and ordering
  */
 async function getCollections(): Promise<CollectionDisplay[]> {
+  // Build static collection map for reliable metadata
+  const staticMap = new Map(
+    HADITH_COLLECTIONS.map(c => [c.id, c])
+  );
+
   try {
     const dbCollections = await prisma.hadithCollection.findMany({
       where: { isActive: true },
-      orderBy: { name: 'asc' },
       select: {
         id: true,
         slug: true,
@@ -50,7 +69,26 @@ async function getCollections(): Promise<CollectionDisplay[]> {
     });
 
     if (dbCollections.length > 0) {
-      return dbCollections;
+      // Merge DB data with static data for accurate book counts
+      const collections: CollectionDisplay[] = dbCollections.map(db => {
+        const staticData = staticMap.get(db.slug);
+        return {
+          id: db.id,
+          slug: db.slug,
+          name: db.name,
+          nameArabic: db.nameArabic,
+          compiler: db.compiler,
+          description: db.description,
+          // Use static book count if DB shows 0
+          totalHadiths: db.totalHadiths > 0 ? db.totalHadiths : (staticData?.totalHadiths ?? 0),
+          totalBooks: db.totalBooks > 0 ? db.totalBooks : (staticData?.totalBooks ?? 0),
+          sortOrder: COLLECTION_SORT_ORDER[db.slug] ?? 99,
+        };
+      });
+
+      // Sort: Sahih first, then by defined order
+      collections.sort((a, b) => a.sortOrder - b.sortOrder);
+      return collections;
     }
 
     // Fallback to static data if database is empty
@@ -63,6 +101,7 @@ async function getCollections(): Promise<CollectionDisplay[]> {
       description: c.description,
       totalHadiths: c.totalHadiths,
       totalBooks: c.totalBooks,
+      sortOrder: COLLECTION_SORT_ORDER[c.id] ?? 99,
     }));
   } catch (error) {
     console.error('Error fetching collections:', error);
@@ -76,6 +115,7 @@ async function getCollections(): Promise<CollectionDisplay[]> {
       description: c.description,
       totalHadiths: c.totalHadiths,
       totalBooks: c.totalBooks,
+      sortOrder: COLLECTION_SORT_ORDER[c.id] ?? 99,
     }));
   }
 }

@@ -410,3 +410,52 @@ select:focus {
   animation: audioHighlight 2s ease-out;
   border-left: 3px solid var(--gold) !important;
 }
+
+/* ============================================
+   TAFSIR CONTENT STYLES
+   ============================================ */
+
+.tafsir-content {
+  font-size: 0.875rem;
+  line-height: 1.8;
+  color: var(--foreground-secondary, #d1d5db);
+}
+
+.tafsir-content h1,
+.tafsir-content h2,
+.tafsir-content h3 {
+  color: var(--gold);
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.tafsir-content h1 {
+  font-size: 1.1rem;
+}
+
+.tafsir-content h2 {
+  font-size: 1rem;
+}
+
+.tafsir-content h3 {
+  font-size: 0.95rem;
+}
+
+.tafsir-content p {
+  margin-bottom: 0.75rem;
+}
+
+.tafsir-content strong {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+/* Arabic text within English tafsir */
+.tafsir-content p:has(> :not(:lang(en))) {
+  font-family: var(--font-arabic, 'Amiri', serif);
+}
+
+.tafsir-content span[style*="color"] {
+  color: var(--gold) !important;
+}

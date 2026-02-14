@@ -13,7 +13,7 @@ import Footer from "@/frontend/components/Footer";
 import HistoryRecorder from "@/frontend/components/HistoryRecorder";
 import prisma from "@/backend/lib/prisma";
 import { getCollectionBooks } from "@/backend/services/hadith-api";
-import { HadithBook } from "@/shared/types/hadith";
+import { HadithBook, HADITH_COLLECTIONS } from "@/shared/types/hadith";
 
 interface PageProps {
   params: Promise<{
@@ -22,11 +22,12 @@ interface PageProps {
 }
 
 /**
- * Fetch collection from database
+ * Fetch collection from database with fallback to static data
  */
 async function getCollection(slug: string) {
+  // Try database first
   try {
-    return await prisma.hadithCollection.findUnique({
+    const dbCollection = await prisma.hadithCollection.findUnique({
       where: { slug },
       select: {
         id: true,
@@ -40,10 +41,37 @@ async function getCollection(slug: string) {
         totalBooks: true,
       },
     });
+
+    if (dbCollection) {
+      // Merge with static data for accurate book counts when DB shows 0
+      const staticData = HADITH_COLLECTIONS.find(c => c.id === slug);
+      return {
+        ...dbCollection,
+        totalHadiths: dbCollection.totalHadiths > 0 ? dbCollection.totalHadiths : (staticData?.totalHadiths ?? 0),
+        totalBooks: dbCollection.totalBooks > 0 ? dbCollection.totalBooks : (staticData?.totalBooks ?? 0),
+      };
+    }
   } catch (error) {
-    console.error('Error fetching collection:', error);
-    return null;
+    console.error('Error fetching collection from DB:', error);
   }
+
+  // Fallback to static data
+  const staticCollection = HADITH_COLLECTIONS.find(c => c.id === slug);
+  if (staticCollection) {
+    return {
+      id: staticCollection.id,
+      slug: staticCollection.id,
+      name: staticCollection.name,
+      nameArabic: staticCollection.nameArabic,
+      compiler: staticCollection.compilerName,
+      compilerArabic: staticCollection.compilerNameArabic,
+      description: staticCollection.description,
+      totalHadiths: staticCollection.totalHadiths,
+      totalBooks: staticCollection.totalBooks,
+    };
+  }
+
+  return null;
 }
 
 /**

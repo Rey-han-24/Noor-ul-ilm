@@ -8,6 +8,7 @@
  * - Translation (toggleable globally)
  * - Bookmark icon to save reading progress
  * - Audio play button for individual verse recitation
+ * - Tafsir (commentary) panel for each verse
  * 
  * Similar to Islam360 reading experience.
  */
@@ -19,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { SurahDetail, AyahTranslation, TRANSLATION_EDITIONS } from "@/shared/types/quran";
 import { toArabicNumeral } from "@/backend/services/quran-api";
 import { getAyahAudioUrl, QURAN_RECITERS, ReciterId } from "@/backend/services/quran-audio";
+import TafsirPanel from "./TafsirPanel";
 
 interface SurahReaderProps {
   /** Complete Surah data with Arabic text */
@@ -122,7 +124,7 @@ function markTutorialSeen(): void {
 }
 
 /**
- * Individual Verse Component with Bookmark and Audio
+ * Individual Verse Component with Bookmark, Audio and Tafsir
  */
 function VerseCard({
   verseNumber,
@@ -138,6 +140,8 @@ function VerseCard({
   isPaused,
   isLoading,
   onPlayAudio,
+  tafsirOpen,
+  onToggleTafsir,
 }: {
   verseNumber: number;
   arabicText: string;
@@ -154,6 +158,8 @@ function VerseCard({
   isPaused: boolean;
   isLoading: boolean;
   onPlayAudio: () => void;
+  tafsirOpen: boolean;
+  onToggleTafsir: () => void;
 }) {
   return (
     <div 
@@ -264,6 +270,34 @@ function VerseCard({
             </svg>
           </button>
 
+          {/* Tafsir (Commentary) Button */}
+          <button
+            onClick={onToggleTafsir}
+            className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm transition-all ${
+              tafsirOpen
+                ? "border-[var(--gold)] bg-[var(--gold)] text-[var(--primary)]"
+                : "border-[var(--gold)]/30 text-[var(--gold)] sm:opacity-0 sm:group-hover:opacity-100 hover:bg-[var(--gold)]/10"
+            }`}
+            aria-label={tafsirOpen ? "Close tafsir" : "View tafsir"}
+            title={tafsirOpen ? "Close commentary" : "View commentary (Tafsir)"}
+          >
+            {/* Book/Tafsir Icon */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill={tafsirOpen ? "currentColor" : "none"}
+              stroke="currentColor"
+              strokeWidth={2}
+              className="h-4 w-4"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"
+              />
+            </svg>
+          </button>
+
           {/* Tutorial Tooltip - Only show on first verse and first visit */}
           {showTutorial && verseNumber === 1 && (
             <div 
@@ -291,7 +325,8 @@ function VerseCard({
                 </div>
                 <p className="text-sm text-[var(--foreground-muted)]">
                   <strong>🔊 Play</strong> - Listen to verse recitation<br/>
-                  <strong>🔖 Bookmark</strong> - Save your reading progress
+                  <strong>🔖 Bookmark</strong> - Save your reading progress<br/>
+                  <strong>📖 Tafsir</strong> - View verse commentary
                 </p>
                 <button
                   onClick={onDismissTutorial}
@@ -326,6 +361,14 @@ function VerseCard({
           </p>
         </div>
       )}
+
+      {/* Tafsir Panel */}
+      <TafsirPanel
+        surahNumber={surahNumber}
+        ayahNumber={verseNumber}
+        isOpen={tafsirOpen}
+        onClose={onToggleTafsir}
+      />
     </div>
   );
 }
@@ -355,6 +398,9 @@ export default function SurahReader({
   const [isPaused, setIsPaused] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentAyahRef = useRef<number | null>(null); // Track current ayah for reciter changes
+
+  // Tafsir state - track which ayah's tafsir is open (null = none)
+  const [openTafsirAyah, setOpenTafsirAyah] = useState<number | null>(null);
 
   // Get current translation edition info
   const currentEdition = TRANSLATION_EDITIONS.find(
@@ -820,6 +866,10 @@ export default function SurahReader({
                 isPaused={isPaused && playingAyah === ayah.numberInSurah}
                 isLoading={audioLoading === ayah.numberInSurah}
                 onPlayAudio={() => handlePlayAyah(ayah.numberInSurah)}
+                tafsirOpen={openTafsirAyah === ayah.numberInSurah}
+                onToggleTafsir={() => setOpenTafsirAyah(
+                  openTafsirAyah === ayah.numberInSurah ? null : ayah.numberInSurah
+                )}
               />
             );
           })}

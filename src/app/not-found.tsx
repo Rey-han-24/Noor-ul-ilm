@@ -26,8 +26,8 @@ export default function NotFound() {
       
       <main className="flex flex-1 items-center justify-center px-4">
         <div className="text-center">
-          {/* Arabic 404 */}
-          <p className="arabic-text mb-4 text-6xl text-[var(--gold)]">٤٠٤</p>
+          {/* 404 */}
+          <p className="mb-4 text-7xl font-bold text-[var(--gold)]">404</p>
           
           {/* Title */}
           <h1 className="mb-4 text-4xl font-bold text-[var(--foreground)]">

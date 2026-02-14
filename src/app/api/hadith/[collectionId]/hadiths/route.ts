@@ -10,8 +10,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { fetchHadithsFromCDN, fetchMinifiedCollection } from "@/backend/services/hadith-external-api";
-import { getHadithsByCollectionAndBook, getAllHadithsByCollection } from "@/backend/data/hadiths";
+import { fetchMinifiedCollection } from "@/backend/services/hadith-external-api";
+import { getAllHadithsByCollection } from "@/backend/data/hadiths";
 
 interface RouteParams {
   params: Promise<{ collectionId: string }>;

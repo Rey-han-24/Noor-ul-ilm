@@ -12,7 +12,7 @@ import Header from "@/frontend/components/Header";
 import Footer from "@/frontend/components/Footer";
 import HistoryRecorder from "@/frontend/components/HistoryRecorder";
 import prisma from "@/backend/lib/prisma";
-import { HadithBook, Hadith } from "@/shared/types/hadith";
+import { HadithBook, Hadith, HADITH_COLLECTIONS } from "@/shared/types/hadith";
 import { getCollectionBooks, getBookHadiths } from "@/backend/services/hadith-api";
 import HadithBookClient from "./HadithBookClient";
 
@@ -24,11 +24,12 @@ interface PageProps {
 }
 
 /**
- * Fetch collection from database
+ * Fetch collection from database with fallback to static data
  */
 async function getCollection(slug: string) {
+  // Try database first
   try {
-    return await prisma.hadithCollection.findUnique({
+    const dbCollection = await prisma.hadithCollection.findUnique({
       where: { slug },
       select: {
         id: true,
@@ -41,10 +42,28 @@ async function getCollection(slug: string) {
         totalBooks: true,
       },
     });
+
+    if (dbCollection) return dbCollection;
   } catch (error) {
-    console.error('Error fetching collection:', error);
-    return null;
+    console.error('Error fetching collection from DB:', error);
   }
+
+  // Fallback to static data
+  const staticCollection = HADITH_COLLECTIONS.find(c => c.id === slug);
+  if (staticCollection) {
+    return {
+      id: staticCollection.id,
+      slug: staticCollection.id,
+      name: staticCollection.name,
+      nameArabic: staticCollection.nameArabic,
+      compiler: staticCollection.compilerName,
+      description: staticCollection.description,
+      totalHadiths: staticCollection.totalHadiths,
+      totalBooks: staticCollection.totalBooks,
+    };
+  }
+
+  return null;
 }
 
 /**
