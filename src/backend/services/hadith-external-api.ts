@@ -74,11 +74,7 @@ function getCached<T>(cache: Map<string, CacheEntry<T>>, key: string): T | null 
   return null;
 }
 
-// ============================================
-// TYPE DEFINITIONS FOR CDN RESPONSES
-// ============================================
 
-/** Raw hadith from CDN JSON */
 interface CDNHadith {
   hadithnumber?: number;
   text?: string;
@@ -86,7 +82,6 @@ interface CDNHadith {
   reference?: { book?: number; hadith?: number };
 }
 
-/** Info.json section metadata (matches actual CDN field names) */
 interface CDNSectionInfo {
   hadithnumber_first: number;
   hadithnumber_last: number;
