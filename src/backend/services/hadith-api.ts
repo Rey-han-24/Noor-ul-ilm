@@ -1,13 +1,14 @@
 /**
- * Hadith API Utilities
+ * Hadith API Service
  * 
- * Provides Hadith data from curated local collections AND external CDN.
+ * Main hadith data provider that integrates with hadithapi.com.
+ * Provides a clean API for fetching hadith collections, chapters, and hadiths.
  * 
- * Data Flow:
- * 1. Local data (Bukhari, Muslim, Nawawi) — hand-curated authentic hadiths
- * 2. CDN data (fawazahmed0/hadith-api) — complete collections with Arabic + English
- * 
- * The system tries local data first, then falls back to CDN for complete data.
+ * Features:
+ * - Full pagination support
+ * - Grade filtering (Sahih, Hasan, Da'if)
+ * - Search across collections
+ * - Caching for performance
  * 
  * @module services/hadith-api
  */
@@ -20,273 +21,58 @@ import {
 } from "@/shared/types/hadith";
 
 import {
-  getHadithsByCollectionAndBook,
-  getAllHadithsByCollection,
-  searchAllHadiths,
-  getCollectionBooks as getLocalCollectionBooks,
-  COLLECTION_BOOKS,
-} from "@/backend/data/hadiths";
+  fetchAvailableBooks,
+  fetchChapters,
+  fetchHadiths,
+  fetchHadithByNumber,
+  searchHadiths as searchHadithsAPI,
+  isHadithAPICollection,
+  HADITH_API_BOOK_SLUGS,
+} from "./hadithapi-service";
 
-import { 
-  fetchSectionFromCDN, 
-  fetchHadithByNumber as fetchExternalHadith,
-  fetchCollectionBooks as fetchExternalBooks,
-  isCDNCollection,
-} from "./hadith-external-api";
+// Re-export for backward compatibility
+export { isHadithAPICollection };
+
+// ============================================
+// COLLECTION DATA
+// ============================================
 
 /**
- * Get all books in a collection
- * Uses local book data first, then CDN info.json for complete book lists
+ * Get all available collections
+ * Merges API data with static metadata for complete info
  */
-export async function getCollectionBooks(collectionId: string): Promise<HadithBook[]> {
-  // Nawawi is special — only 1 book
-  if (collectionId === "nawawi") {
-    return getLocalCollectionBooks("nawawi");
-  }
-
-  // Try CDN first for complete book data (has all books with accurate hadith counts)
-  if (isCDNCollection(collectionId)) {
-    try {
-      const cdnBooks = await fetchExternalBooks(collectionId);
-      if (cdnBooks.length > 0) {
-        // Merge with local Arabic names if available
-        const localBooks = COLLECTION_BOOKS[collectionId] || [];
-        const localBookMap = new Map(localBooks.map(b => [b.bookNumber, b]));
-
-        return cdnBooks.map(cdnBook => {
-          const localBook = localBookMap.get(cdnBook.bookNumber);
+export async function getCollections(): Promise<HadithCollection[]> {
+  try {
+    const apiCollections = await fetchAvailableBooks();
+    
+    if (apiCollections.length > 0) {
+      // Merge API data with our static metadata for richer info
+      return apiCollections.map((apiCol) => {
+        const staticCol = HADITH_COLLECTIONS.find((c) => c.id === apiCol.id);
+        if (staticCol) {
           return {
-            ...cdnBook,
-            nameArabic: localBook?.nameArabic || cdnBook.nameArabic || "",
+            ...staticCol,
+            totalHadiths: apiCol.totalHadiths || staticCol.totalHadiths,
+            totalBooks: apiCol.totalBooks || staticCol.totalBooks,
           };
-        });
-      }
-    } catch (error) {
-      console.error(`Error fetching CDN books for ${collectionId}:`, error);
+        }
+        return apiCol;
+      });
     }
+  } catch (error) {
+    console.error("[HadithAPI] Error fetching collections:", error);
   }
 
-  // Fallback to local data
-  const localBooks = getLocalCollectionBooks(collectionId);
-  if (localBooks.length > 0) {
-    return localBooks;
-  }
-
-  // Last resort: generated books
-  return getMockBooks(collectionId);
+  // Fallback to static data
+  return HADITH_COLLECTIONS.filter((c) => c.id in HADITH_API_BOOK_SLUGS);
 }
 
 /**
- * Get hadiths from a specific book (CDN first → local fallback)
- * Always prefers CDN data since it has complete collections.
- * Local data is only used as fallback when CDN is unavailable.
+ * Get a specific collection by ID
  */
-export async function getBookHadiths(
-  collectionId: string, 
-  bookNumber: number,
-  page: number = 1,
-  limit: number = 50
-): Promise<{ hadiths: Hadith[]; total: number; hasMore: boolean }> {
-  let hadiths: Hadith[] = [];
-
-  // Nawawi is local-only (complete set of 42 hadiths)
-  if (collectionId === "nawawi") {
-    hadiths = getHadithsByCollectionAndBook(collectionId, bookNumber);
-  } else if (isCDNCollection(collectionId)) {
-    // For all CDN-supported collections, fetch from CDN first (has complete data)
-    try {
-      const sectionHadiths = await fetchSectionFromCDN(collectionId, bookNumber);
-      if (sectionHadiths.length > 0) {
-        hadiths = sectionHadiths;
-      }
-    } catch (error) {
-      console.error(`Error fetching CDN section for ${collectionId}/${bookNumber}:`, error);
-    }
-
-    // Fallback to local data only if CDN returned nothing
-    if (hadiths.length === 0) {
-      hadiths = getHadithsByCollectionAndBook(collectionId, bookNumber);
-    }
-  } else {
-    // Non-CDN collections use local data only
-    hadiths = getHadithsByCollectionAndBook(collectionId, bookNumber);
-  }
-  
-  // Apply pagination
-  const startIndex = (page - 1) * limit;
-  const paginatedHadiths = hadiths.slice(startIndex, startIndex + limit);
-  
-  return {
-    hadiths: paginatedHadiths,
-    total: hadiths.length,
-    hasMore: startIndex + limit < hadiths.length,
-  };
-}
-
-/**
- * Get a specific hadith by number (CDN first → local fallback)
- */
-export async function getHadith(
-  collectionId: string,
-  hadithNumber: number
-): Promise<Hadith | null> {
-  // For CDN collections, try CDN first (more complete data)
-  if (isCDNCollection(collectionId)) {
-    try {
-      const hadith = await fetchExternalHadith(collectionId, hadithNumber);
-      if (hadith) return hadith;
-    } catch (error) {
-      console.error(`Error fetching hadith ${hadithNumber} from CDN:`, error);
-    }
-  }
-
-  // Fallback to local data
-  const allLocal = getAllHadithsByCollection(collectionId);
-  const localHadith = allLocal.find(h => h.hadithNumber === hadithNumber);
-  return localHadith || null;
-}
-
-/**
- * Search hadiths across all collections
- * Currently searches local data. CDN search would require downloading full collections.
- */
-export async function searchHadiths(
-  query: string,
-  collectionId?: string,
-  page: number = 1,
-  limit: number = 20
-): Promise<{ hadiths: Hadith[]; total: number; hasMore: boolean }> {
-  if (!query.trim()) {
-    return { hadiths: [], total: 0, hasMore: false };
-  }
-
-  // Search using local data
-  let results = searchAllHadiths(query);
-  
-  // Filter by collection if specified
-  if (collectionId) {
-    results = results.filter(h => 
-      h.reference?.toLowerCase().startsWith(collectionId.toLowerCase())
-    );
-  }
-  
-  // Apply pagination
-  const startIndex = (page - 1) * limit;
-  const paginatedResults = results.slice(startIndex, startIndex + limit);
-  
-  return {
-    hadiths: paginatedResults,
-    total: results.length,
-    hasMore: startIndex + limit < results.length,
-  };
-}
-
-// ============================================
-// FALLBACK DATA
-// ============================================
-
-/**
- * Book names for each collection (authentic book structure)
- */
-const BOOK_NAMES: Record<string, { name: string; nameArabic: string }[]> = {
-  bukhari: [
-    { name: "Revelation", nameArabic: "بدء الوحي" },
-    { name: "Belief (Faith)", nameArabic: "الإيمان" },
-    { name: "Knowledge", nameArabic: "العلم" },
-    { name: "Ablutions (Wudu')", nameArabic: "الوضوء" },
-    { name: "Bathing (Ghusl)", nameArabic: "الغسل" },
-    { name: "Menstrual Periods", nameArabic: "الحيض" },
-    { name: "Tayammum", nameArabic: "التيمم" },
-    { name: "Prayers (Salat)", nameArabic: "الصلاة" },
-    { name: "Times of the Prayers", nameArabic: "مواقيت الصلاة" },
-    { name: "Call to Prayers (Adhan)", nameArabic: "الأذان" },
-  ],
-  muslim: [
-    { name: "The Book of Faith", nameArabic: "كتاب الإيمان" },
-    { name: "The Book of Purification", nameArabic: "كتاب الطهارة" },
-    { name: "The Book of Menstruation", nameArabic: "كتاب الحيض" },
-    { name: "The Book of Prayers", nameArabic: "كتاب الصلاة" },
-    { name: "The Book of Mosques", nameArabic: "كتاب المساجد" },
-    { name: "The Book of Prayer - Travelers", nameArabic: "صلاة المسافرين" },
-    { name: "The Book of Friday Prayer", nameArabic: "كتاب الجمعة" },
-    { name: "The Book of the Two Eids", nameArabic: "صلاة العيدين" },
-    { name: "The Book of Prayer for Rain", nameArabic: "صلاة الاستسقاء" },
-    { name: "The Book of Eclipses", nameArabic: "كتاب الكسوف" },
-  ],
-  tirmidhi: [
-    { name: "Purification", nameArabic: "الطهارة" },
-    { name: "The Prayer", nameArabic: "الصلاة" },
-    { name: "The Book on Friday Prayer", nameArabic: "الجمعة" },
-    { name: "The Book on Zakat", nameArabic: "الزكاة" },
-    { name: "The Book on Fasting", nameArabic: "الصوم" },
-    { name: "The Book on Hajj", nameArabic: "الحج" },
-    { name: "The Book on Funerals", nameArabic: "الجنائز" },
-    { name: "The Book on Marriage", nameArabic: "النكاح" },
-    { name: "The Book on Suckling", nameArabic: "الرضاع" },
-    { name: "The Book on Divorce", nameArabic: "الطلاق" },
-  ],
-  abudawud: [
-    { name: "Purification (Kitab Al-Taharah)", nameArabic: "كتاب الطهارة" },
-    { name: "Prayer (Kitab Al-Salat)", nameArabic: "كتاب الصلاة" },
-    { name: "Prayer (Kitab Al-Salat): Details", nameArabic: "تفريع أبواب الصلاة" },
-    { name: "The Quran (Kitab Al-Quran)", nameArabic: "كتاب القرآن" },
-    { name: "Prayer (Kitab Al-Witr)", nameArabic: "كتاب الوتر" },
-    { name: "Voluntary Prayers (Kitab Al-Tatawwu')", nameArabic: "كتاب التطوع" },
-    { name: "Prayer During Journey", nameArabic: "صلاة السفر" },
-    { name: "The Book of Fasting", nameArabic: "كتاب الصوم" },
-    { name: "Jihad (Kitab Al-Jihad)", nameArabic: "كتاب الجهاد" },
-    { name: "Sacrifice (Kitab Al-Dahaya)", nameArabic: "كتاب الضحايا" },
-  ],
-  nasai: [
-    { name: "The Book of Purification", nameArabic: "كتاب الطهارة" },
-    { name: "The Book of Water", nameArabic: "كتاب المياه" },
-    { name: "The Book of Menstruation", nameArabic: "كتاب الحيض" },
-    { name: "The Book of Ghusl", nameArabic: "كتاب الغسل" },
-    { name: "The Book of Tayammum", nameArabic: "كتاب التيمم" },
-    { name: "The Book of Prayer", nameArabic: "كتاب الصلاة" },
-    { name: "The Book of the Times of Prayer", nameArabic: "كتاب المواقيت" },
-    { name: "The Book of the Adhan", nameArabic: "كتاب الأذان" },
-    { name: "The Book of the Masjid", nameArabic: "كتاب المساجد" },
-    { name: "The Book of the Qiblah", nameArabic: "كتاب القبلة" },
-  ],
-  ibnmajah: [
-    { name: "The Book of Purification", nameArabic: "كتاب الطهارة" },
-    { name: "The Chapters on Prayer", nameArabic: "إقامة الصلاة والسنة فيها" },
-    { name: "The Chapters on the Adhan", nameArabic: "كتاب الأذان" },
-    { name: "The Chapters on the Mosques", nameArabic: "كتاب المساجد" },
-    { name: "Establishing the Prayer", nameArabic: "إقامة الصلاة" },
-    { name: "The Chapters on Funerals", nameArabic: "كتاب الجنائز" },
-    { name: "The Chapters on Fasting", nameArabic: "كتاب الصيام" },
-    { name: "The Chapters on Zakat", nameArabic: "كتاب الزكاة" },
-    { name: "The Chapters on Marriage", nameArabic: "كتاب النكاح" },
-    { name: "The Chapters on Divorce", nameArabic: "كتاب الطلاق" },
-  ],
-};
-
-/**
- * Get books for a collection (local data)
- */
-function getMockBooks(collectionId: string): HadithBook[] {
-  const collection = HADITH_COLLECTIONS.find((c) => c.id === collectionId);
-  if (!collection) return [];
-
-  const bookNames = BOOK_NAMES[collectionId] || [];
-  const bookCount = Math.min(collection.totalBooks, 10);
-  const books: HadithBook[] = [];
-
-  for (let i = 0; i < bookCount; i++) {
-    const bookInfo = bookNames[i] || { name: `Book ${i + 1}`, nameArabic: `كتاب ${i + 1}` };
-    books.push({
-      bookNumber: i + 1,
-      name: bookInfo.name,
-      nameArabic: bookInfo.nameArabic,
-      hadithCount: Math.floor(50 + Math.random() * 100), // 50-150 hadiths per book
-      hadithStartNumber: i * 100 + 1,
-      hadithEndNumber: (i + 1) * 100,
-    });
-  }
-
-  return books;
+export async function getCollection(collectionId: string): Promise<HadithCollection | null> {
+  const collections = await getCollections();
+  return collections.find((c) => c.id === collectionId) || null;
 }
 
 /**
@@ -296,6 +82,226 @@ export function getCollectionStats(collectionId: string): HadithCollection | nul
   return HADITH_COLLECTIONS.find((c) => c.id === collectionId) || null;
 }
 
+// ============================================
+// BOOKS/CHAPTERS
+// ============================================
+
+/**
+ * Get all books (chapters) in a collection
+ */
+export async function getCollectionBooks(collectionId: string): Promise<HadithBook[]> {
+  if (!isHadithAPICollection(collectionId)) {
+    console.warn(`[HadithAPI] Collection not supported: ${collectionId}`);
+    return [];
+  }
+
+  try {
+    const chapters = await fetchChapters(collectionId);
+    if (chapters.length > 0) {
+      return chapters;
+    }
+  } catch (error) {
+    console.error(`[HadithAPI] Error fetching chapters for ${collectionId}:`, error);
+  }
+
+  return [];
+}
+
+// ============================================
+// HADITHS
+// ============================================
+
+/**
+ * Pagination options for hadith queries
+ */
+export interface HadithQueryOptions {
+  page?: number;
+  limit?: number;
+  status?: "Sahih" | "Hasan" | "Da`eef";
+}
+
+/**
+ * Paginated hadith result
+ */
+export interface PaginatedHadithResult {
+  hadiths: Hadith[];
+  total: number;
+  currentPage: number;
+  lastPage: number;
+  hasMore: boolean;
+  limit: number;
+}
+
+/**
+ * Get hadiths from a specific book/chapter with pagination
+ */
+export async function getBookHadiths(
+  collectionId: string, 
+  bookNumber: number,
+  options: HadithQueryOptions = {}
+): Promise<PaginatedHadithResult> {
+  const { page = 1, limit = 25, status } = options;
+
+  if (!isHadithAPICollection(collectionId)) {
+    return {
+      hadiths: [],
+      total: 0,
+      currentPage: 1,
+      lastPage: 1,
+      hasMore: false,
+      limit,
+    };
+  }
+
+  try {
+    const result = await fetchHadiths(collectionId, {
+      chapter: bookNumber,
+      page,
+      limit,
+      status,
+    });
+
+    return {
+      ...result,
+      limit,
+    };
+  } catch (error) {
+    console.error(`[HadithAPI] Error fetching hadiths for ${collectionId}/${bookNumber}:`, error);
+    return {
+      hadiths: [],
+      total: 0,
+      currentPage: 1,
+      lastPage: 1,
+      hasMore: false,
+      limit,
+    };
+  }
+}
+
+/**
+ * Get all hadiths from a collection with pagination
+ */
+export async function getCollectionHadiths(
+  collectionId: string,
+  options: HadithQueryOptions = {}
+): Promise<PaginatedHadithResult> {
+  const { page = 1, limit = 25, status } = options;
+
+  if (!isHadithAPICollection(collectionId)) {
+    return {
+      hadiths: [],
+      total: 0,
+      currentPage: 1,
+      lastPage: 1,
+      hasMore: false,
+      limit,
+    };
+  }
+
+  try {
+    const result = await fetchHadiths(collectionId, {
+      page,
+      limit,
+      status,
+    });
+
+    return {
+      ...result,
+      limit,
+    };
+  } catch (error) {
+    console.error(`[HadithAPI] Error fetching collection hadiths:`, error);
+    return {
+      hadiths: [],
+      total: 0,
+      currentPage: 1,
+      lastPage: 1,
+      hasMore: false,
+      limit,
+    };
+  }
+}
+
+/**
+ * Get a specific hadith by number
+ */
+export async function getHadith(
+  collectionId: string,
+  hadithNumber: number
+): Promise<Hadith | null> {
+  if (!isHadithAPICollection(collectionId)) {
+    return null;
+  }
+
+  try {
+    return await fetchHadithByNumber(collectionId, hadithNumber);
+  } catch (error) {
+    console.error(`[HadithAPI] Error fetching hadith ${hadithNumber}:`, error);
+    return null;
+  }
+}
+
+// ============================================
+// SEARCH
+// ============================================
+
+/**
+ * Search options
+ */
+export interface SearchOptions {
+  collectionId?: string;
+  page?: number;
+  limit?: number;
+}
+
+/**
+ * Search hadiths across collections
+ */
+export async function searchHadiths(
+  query: string,
+  options: SearchOptions = {}
+): Promise<PaginatedHadithResult> {
+  const { collectionId, page = 1, limit = 20 } = options;
+
+  if (!query.trim()) {
+    return {
+      hadiths: [],
+      total: 0,
+      currentPage: 1,
+      lastPage: 1,
+      hasMore: false,
+      limit,
+    };
+  }
+
+  try {
+    const result = await searchHadithsAPI(query, {
+      collectionId,
+      page,
+      limit,
+    });
+
+    return {
+      ...result,
+      limit,
+    };
+  } catch (error) {
+    console.error("[HadithAPI] Search error:", error);
+    return {
+      hadiths: [],
+      total: 0,
+      currentPage: 1,
+      lastPage: 1,
+      hasMore: false,
+      limit,
+    };
+  }
+}
+
+// ============================================
+// UTILITIES
+// ============================================
+
 /**
  * Format hadith reference for display
  */
@@ -304,4 +310,11 @@ export function formatHadithReference(collectionId: string, hadithNumber: number
   if (!collection) return `Hadith ${hadithNumber}`;
   
   return `${collection.name} ${hadithNumber}`;
+}
+
+/**
+ * Get supported collection IDs
+ */
+export function getSupportedCollections(): string[] {
+  return Object.keys(HADITH_API_BOOK_SLUGS);
 }

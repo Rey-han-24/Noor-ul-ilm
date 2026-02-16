@@ -1,7 +1,7 @@
 # 🗺️ Noor ul Ilm - Development Roadmap
 
-> **Last Updated:** February 11, 2026  
-> **Version:** 1.2.0  
+> **Last Updated:** February 12, 2026  
+> **Version:** 1.2.1  
 > **Status:** Active Development
 
 ---
@@ -84,6 +84,7 @@
   - [x] Efficient section-based caching (2hr TTL in-memory)
   - [x] Fallback chain: local data → CDN section → CDN single hadith → CDN full collection
   - [x] Single hadith endpoint for efficient individual lookups
+  - [x] **Bug Fix (v1.2.1):** Fixed CDN field name mapping (`hadithnumber_first`/`hadithnumber_last`) and reversed data flow to CDN-first approach
 
 - [ ] **Enhanced Hadith Display**
   - [ ] Full narrator chain display

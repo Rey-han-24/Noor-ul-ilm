@@ -23,6 +23,13 @@ interface HadithBookClientProps {
   bookNumber: number;
   /** Book name for display */
   bookName: string;
+  /** Pagination info */
+  pagination?: {
+    currentPage: number;
+    lastPage: number;
+    total: number;
+    hasMore: boolean;
+  };
 }
 
 const HADITH_BOOKMARK_KEY = "noor-ul-ilm-hadith-bookmark";
@@ -120,11 +127,15 @@ export default function HadithBookClient({
   collectionName,
   bookNumber,
   bookName,
+  pagination,
 }: HadithBookClientProps) {
   const [bookmark, setBookmark] = useState<HadithBookmark | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showArabicAll, setShowArabicAll] = useState(true);
+  const [currentHadiths, setCurrentHadiths] = useState<Hadith[]>(hadiths);
+  const [currentPage, setCurrentPage] = useState(pagination?.currentPage || 1);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Load bookmark and check tutorial on mount
   useEffect(() => {
@@ -193,6 +204,32 @@ export default function HadithBookClient({
     setShowTutorial(false);
     markTutorialSeen();
   }, []);
+
+  // Handle page change
+  const handlePageChange = useCallback(async (newPage: number) => {
+    if (newPage < 1 || (pagination && newPage > pagination.lastPage)) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        `/api/hadith/${collectionId}/${bookNumber}?page=${newPage}&limit=25`
+      );
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        setCurrentHadiths(data.data);
+        setCurrentPage(newPage);
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    } catch (error) {
+      console.error('Error fetching page:', error);
+      setToastMessage('Failed to load page');
+      setTimeout(() => setToastMessage(null), 3000);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [collectionId, bookNumber, pagination]);
 
   return (
     <section className="py-8 sm:py-12">
@@ -276,7 +313,12 @@ export default function HadithBookClient({
         {/* Reading Controls */}
         <div className="mb-6 flex items-center justify-between rounded-lg border border-[var(--gold)]/20 bg-[var(--background-secondary)] p-4">
           <div className="flex items-center gap-4 text-sm text-[var(--foreground-muted)]">
-            <span>{hadiths.length} Hadiths</span>
+            <span>{pagination?.total || currentHadiths.length} Hadiths</span>
+            {pagination && pagination.lastPage > 1 && (
+              <span className="text-xs">
+                Page {currentPage} of {pagination.lastPage}
+              </span>
+            )}
           </div>
 
           <button
@@ -291,10 +333,17 @@ export default function HadithBookClient({
           </button>
         </div>
 
+        {/* Loading Overlay */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--gold)] border-t-transparent"></div>
+          </div>
+        )}
+
         {/* Hadiths List */}
-        {hadiths.length > 0 ? (
+        {!isLoading && currentHadiths.length > 0 ? (
           <div className="space-y-6">
-            {hadiths.map((hadith) => (
+            {currentHadiths.map((hadith) => (
               <HadithCard
                 key={hadith.hadithNumber}
                 hadith={hadith}
@@ -310,11 +359,62 @@ export default function HadithBookClient({
               />
             ))}
           </div>
-        ) : (
+        ) : !isLoading ? (
           <div className="rounded-xl border border-[var(--gold)]/20 bg-[var(--background-secondary)] p-8 text-center">
             <p className="text-[var(--foreground-muted)]">
               No hadiths found in this book. Please try again later.
             </p>
+          </div>
+        ) : null}
+
+        {/* Pagination Controls */}
+        {pagination && pagination.lastPage > 1 && !isLoading && (
+          <div className="mt-8 flex items-center justify-center gap-2">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage <= 1}
+              className="rounded-lg border border-[var(--gold)]/30 px-4 py-2 text-sm font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--gold)]/10 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Previous
+            </button>
+
+            <div className="flex items-center gap-1">
+              {/* Page numbers */}
+              {Array.from({ length: Math.min(5, pagination.lastPage) }, (_, i) => {
+                let pageNum: number;
+                if (pagination.lastPage <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= pagination.lastPage - 2) {
+                  pageNum = pagination.lastPage - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => handlePageChange(pageNum)}
+                    className={`h-9 w-9 rounded-lg text-sm font-medium transition-colors ${
+                      currentPage === pageNum
+                        ? "bg-[var(--gold)] text-[var(--primary)]"
+                        : "border border-[var(--gold)]/30 text-[var(--foreground)] hover:bg-[var(--gold)]/10"
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage >= pagination.lastPage}
+              className="rounded-lg border border-[var(--gold)]/30 px-4 py-2 text-sm font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--gold)]/10 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Next
+            </button>
           </div>
         )}
 
@@ -324,7 +424,7 @@ export default function HadithBookClient({
             {collectionName} • Book {bookNumber}: {bookName}
           </p>
           <p className="mt-1 text-xs text-[var(--foreground-muted)]">
-            Source: Sunnah.com API (Verified)
+            Source: HadithAPI.com (Verified)
           </p>
         </div>
       </div>

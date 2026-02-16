@@ -1,12 +1,11 @@
 /**
  * API Route: GET /api/hadith/[collectionId]/hadith/[hadithNumber]
  * 
- * Returns a specific hadith by number.
+ * Returns a specific hadith by number from hadithapi.com.
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { fetchHadithByNumber } from "@/backend/services/hadith-external-api";
-import { getHadith } from "@/backend/services/hadith-api";
+import { getHadith, isHadithAPICollection } from "@/backend/services/hadith-api";
 
 interface RouteParams {
   params: Promise<{ collectionId: string; hadithNumber: string }>;
@@ -26,21 +25,23 @@ export async function GET(
       );
     }
 
+    // Validate collection
+    if (!isHadithAPICollection(collectionId)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid or unsupported collection" },
+        { status: 400 }
+      );
+    }
+
     const hadithNum = parseInt(hadithNumber, 10);
-    if (isNaN(hadithNum)) {
+    if (isNaN(hadithNum) || hadithNum < 1) {
       return NextResponse.json(
         { success: false, error: "Invalid hadith number" },
         { status: 400 }
       );
     }
 
-    // Try local data first
-    let hadith = await getHadith(collectionId, hadithNum);
-    
-    // If not found locally, try external
-    if (!hadith) {
-      hadith = await fetchHadithByNumber(collectionId, hadithNum);
-    }
+    const hadith = await getHadith(collectionId, hadithNum);
 
     if (!hadith) {
       return NextResponse.json(

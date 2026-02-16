@@ -3,13 +3,15 @@
  * 
  * POST /api/admin/hadiths/import
  * 
- * Imports hadiths from external API to database.
+ * Imports hadiths from hadithapi.com to database.
+ * Note: With the live API integration, this is primarily for
+ * caching purposes or offline backup.
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { fetchMinifiedCollection } from "@/backend/services/hadith-external-api";
+import { getCollectionHadiths, isHadithAPICollection } from "@/backend/services/hadith-api";
 
-// Collection mapping for external API
+// Collection mapping for display
 const COLLECTION_MAP: Record<string, { name: string; nameArabic: string; compiler: string }> = {
   bukhari: { name: "Sahih al-Bukhari", nameArabic: "صحيح البخاري", compiler: "Imam al-Bukhari" },
   muslim: { name: "Sahih Muslim", nameArabic: "صحيح مسلم", compiler: "Imam Muslim" },
@@ -22,7 +24,7 @@ const COLLECTION_MAP: Record<string, { name: string; nameArabic: string; compile
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { collectionId, source = "api" } = body;
+    const { collectionId } = body;
 
     if (!collectionId) {
       return NextResponse.json(
@@ -31,97 +33,64 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const collectionInfo = COLLECTION_MAP[collectionId];
-    if (!collectionInfo) {
+    if (!isHadithAPICollection(collectionId)) {
       return NextResponse.json(
-        { success: false, error: "Invalid collection ID" },
+        { success: false, error: "Invalid or unsupported collection ID" },
         { status: 400 }
       );
     }
 
-    // Fetch from external API
-    console.log(`Starting import for ${collectionId}...`);
-    const hadiths = await fetchMinifiedCollection(collectionId);
-
-    if (hadiths.length === 0) {
+    const collectionInfo = COLLECTION_MAP[collectionId];
+    if (!collectionInfo) {
       return NextResponse.json(
-        { success: false, error: "No hadiths found from external source" },
-        { status: 404 }
+        { success: false, error: "Unknown collection" },
+        { status: 400 }
       );
     }
 
-    // In a real implementation, you would save to database here using Prisma
-    // For now, we'll return success with the count
-    
-    // Example Prisma code (uncomment when database is set up):
-    /*
-    const prisma = new PrismaClient();
-    
-    // Create or update collection
-    const collection = await prisma.hadithCollection.upsert({
-      where: { slug: collectionId },
-      update: { totalHadiths: hadiths.length },
-      create: {
-        slug: collectionId,
-        name: collectionInfo.name,
-        nameArabic: collectionInfo.nameArabic,
-        compiler: collectionInfo.compiler,
-        totalHadiths: hadiths.length,
-      },
-    });
+    // Fetch sample from hadithapi.com to verify connectivity
+    console.log(`Verifying API access for ${collectionId}...`);
+    const result = await getCollectionHadiths(collectionId, { page: 1, limit: 10 });
 
-    // Insert hadiths in batches
-    const batchSize = 100;
-    let imported = 0;
-    
-    for (let i = 0; i < hadiths.length; i += batchSize) {
-      const batch = hadiths.slice(i, i + batchSize);
-      await prisma.hadith.createMany({
-        data: batch.map(h => ({
-          collectionId: collection.id,
-          hadithNumber: h.hadithNumber,
-          arabicText: h.arabicText,
-          englishText: h.englishText,
-          primaryNarrator: h.primaryNarrator,
-          grade: h.grade?.toUpperCase() as HadithGrade,
-          gradedBy: h.gradedBy,
-          bookNumber: h.bookNumber,
-          reference: h.reference,
-          inBookReference: h.inBookReference,
-        })),
-        skipDuplicates: true,
-      });
-      imported += batch.length;
+    if (result.hadiths.length === 0) {
+      return NextResponse.json(
+        { success: false, error: "Could not fetch hadiths from API" },
+        { status: 503 }
+      );
     }
-    */
+
+    // Note: With live API, we don't need to import to database
+    // The API serves data directly. This endpoint can be used
+    // for database caching if needed in the future.
 
     return NextResponse.json({
       success: true,
       data: {
         collection: collectionId,
         collectionName: collectionInfo.name,
-        total: hadiths.length,
-        imported: hadiths.length,
-        skipped: 0,
-        message: `Successfully fetched ${hadiths.length} hadiths from ${collectionInfo.name}`,
+        total: result.total,
+        sampleFetched: result.hadiths.length,
+        message: `API connection verified. ${collectionInfo.name} has ${result.total} hadiths available via hadithapi.com`,
       },
     });
   } catch (error) {
-    console.error("Error importing hadiths:", error);
+    console.error("Error verifying hadith API:", error);
     return NextResponse.json(
-      { success: false, error: "Failed to import hadiths" },
+      { success: false, error: "Failed to connect to hadith API" },
       { status: 500 }
     );
   }
 }
 
 export async function GET() {
-  // Return available collections for import
+  // Return available collections
   return NextResponse.json({
     success: true,
-    data: Object.entries(COLLECTION_MAP).map(([id, info]) => ({
-      id,
-      ...info,
-    })),
+    data: Object.entries(COLLECTION_MAP)
+      .filter(([id]) => isHadithAPICollection(id))
+      .map(([id, info]) => ({
+        id,
+        ...info,
+      })),
   });
 }

@@ -17,7 +17,7 @@ import {
 } from "@/shared/types/search";
 import { SURAH_LIST } from "@/shared/types/quran";
 import { HADITH_COLLECTIONS } from "@/shared/types/hadith";
-import { searchAllHadiths as searchLocalHadiths } from "@/backend/data/hadiths";
+import { searchHadiths as searchHadithAPI } from "@/backend/services/hadith-api";
 
 // ============================================
 // LOCAL STORAGE KEYS
@@ -422,38 +422,43 @@ function searchQuran(query: string): QuranSearchResult[] {
 }
 
 /**
- * Search Hadith content using local data
+ * Search Hadith content using hadithapi.com API
  */
-function searchHadith(query: string): HadithSearchResult[] {
+async function searchHadith(query: string): Promise<HadithSearchResult[]> {
   if (!query.trim()) return [];
   
   const results: HadithSearchResult[] = [];
   
-  // Search in local hadith database first
-  const localResults = searchLocalHadiths(query);
-  
-  for (const hadith of localResults) {
-    const collectionInfo = HADITH_COLLECTIONS.find(c => 
-      hadith.reference?.toLowerCase().startsWith(c.id.toLowerCase())
-    );
+  // Search using hadithapi.com API
+  try {
+    const apiResults = await searchHadithAPI(query, { limit: 50 });
     
-    results.push({
-      type: "hadith",
-      id: `hadith-local-${hadith.reference || hadith.hadithNumber}`,
-      collectionId: collectionInfo?.id || "bukhari",
-      collectionName: collectionInfo?.name || "Sahih al-Bukhari",
-      bookNumber: hadith.bookNumber || 1,
-      hadithNumber: hadith.hadithNumber,
-      arabicText: hadith.arabicText,
-      englishText: hadith.englishText,
-      grade: hadith.grade,
-      narrator: hadith.primaryNarrator,
-      score: 75,
-      snippet: generateSnippet(hadith.englishText, query),
-    });
+    for (const hadith of apiResults.hadiths) {
+      const collectionInfo = HADITH_COLLECTIONS.find(c => 
+        hadith.reference?.toLowerCase().startsWith(c.id.toLowerCase()) ||
+        hadith.reference?.toLowerCase().includes(c.name.toLowerCase())
+      );
+      
+      results.push({
+        type: "hadith",
+        id: `hadith-api-${hadith.reference || hadith.hadithNumber}`,
+        collectionId: collectionInfo?.id || "bukhari",
+        collectionName: collectionInfo?.name || "Sahih al-Bukhari",
+        bookNumber: hadith.bookNumber || 1,
+        hadithNumber: hadith.hadithNumber,
+        arabicText: hadith.arabicText,
+        englishText: hadith.englishText,
+        grade: hadith.grade,
+        narrator: hadith.primaryNarrator,
+        score: 75,
+        snippet: generateSnippet(hadith.englishText, query),
+      });
+    }
+  } catch (error) {
+    console.error("Error searching hadiths via API:", error);
   }
   
-  // Also search the static data for additional results
+  // Also search the static fallback data for additional results
   for (const hadith of HADITH_SEARCH_DATA) {
     // Search in Arabic and English
     const arabicScore = calculateScore(query, hadith.arabicText);
@@ -519,7 +524,8 @@ export async function search(params: SearchParams): Promise<SearchResponse> {
   }
   
   if (filter === "all" || filter === "hadith") {
-    results = [...results, ...searchHadith(query)];
+    const hadithResults = await searchHadith(query);
+    results = [...results, ...hadithResults];
   }
   
   // Remove duplicates (by id)

@@ -108,14 +108,17 @@ export default async function BookPage({ params }: PageProps) {
 
   const currentBook = books.find((b) => b.bookNumber === bookNumber);
 
-  // Fetch hadiths
-  let hadithData: { hadiths: Hadith[]; total: number; hasMore: boolean } = { 
-    hadiths: [], 
+  // Fetch hadiths with pagination
+  let hadithData = { 
+    hadiths: [] as Hadith[], 
     total: 0, 
-    hasMore: false 
+    currentPage: 1,
+    lastPage: 1,
+    hasMore: false,
+    limit: 25,
   };
   try {
-    hadithData = await getBookHadiths(collectionId, bookNumber);
+    hadithData = await getBookHadiths(collectionId, bookNumber, { page: 1, limit: 25 });
   } catch (error) {
     console.error("Error fetching hadiths:", error);
   }
@@ -185,6 +188,12 @@ export default async function BookPage({ params }: PageProps) {
           collectionName={collection.name}
           bookNumber={bookNumber}
           bookName={currentBook?.name || `Book ${bookNumber}`}
+          pagination={{
+            currentPage: hadithData.currentPage,
+            lastPage: hadithData.lastPage,
+            total: hadithData.total,
+            hasMore: hadithData.hasMore,
+          }}
         />
 
         {/* Navigation */}

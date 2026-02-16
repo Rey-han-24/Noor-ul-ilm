@@ -40,17 +40,18 @@ export async function GET(
     // Get pagination parameters
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "50", 10);
+    const limit = parseInt(searchParams.get("limit") || "25", 10);
 
-    const result = await getBookHadiths(collectionId, bookNum, page, limit);
+    const result = await getBookHadiths(collectionId, bookNum, { page, limit });
     
     return NextResponse.json({
       success: true,
       data: result.hadiths,
       pagination: {
-        page,
-        limit,
+        page: result.currentPage,
+        limit: result.limit,
         total: result.total,
+        lastPage: result.lastPage,
         hasMore: result.hasMore,
       },
       collection: collectionId,

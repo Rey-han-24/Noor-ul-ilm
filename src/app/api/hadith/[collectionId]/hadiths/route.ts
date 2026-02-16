@@ -1,25 +1,21 @@
 /**
  * API Route: GET /api/hadith/[collectionId]/hadiths
  * 
- * Returns hadiths from a collection, fetched from external CDN.
+ * Returns all hadiths from a collection with pagination.
+ * Uses hadithapi.com as the data source.
  * 
  * Query Parameters:
  * - page: Page number (default: 1)
- * - limit: Number of hadiths per page (default: 50)
- * - section: CDN section number (default: 1)
+ * - limit: Number of hadiths per page (default: 25)
+ * - status: Filter by grade - Sahih, Hasan, or Da`eef (optional)
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { fetchMinifiedCollection } from "@/backend/services/hadith-external-api";
-import { getAllHadithsByCollection } from "@/backend/data/hadiths";
+import { getCollectionHadiths, isHadithAPICollection } from "@/backend/services/hadith-api";
 
 interface RouteParams {
   params: Promise<{ collectionId: string }>;
 }
-
-// Cache for fetched hadiths
-const hadithCache: Map<string, { data: unknown; timestamp: number }> = new Map();
-const CACHE_TTL = 3600000; // 1 hour
 
 export async function GET(
   request: NextRequest,
@@ -35,56 +31,37 @@ export async function GET(
       );
     }
 
+    // Validate collection
+    if (!isHadithAPICollection(collectionId)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid or unsupported collection" },
+        { status: 400 }
+      );
+    }
+
     // Get query parameters
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "50", 10);
-    const useExternal = searchParams.get("external") === "true";
+    const limit = parseInt(searchParams.get("limit") || "25", 10);
+    const status = searchParams.get("status") as "Sahih" | "Hasan" | "Da`eef" | null;
 
-    let hadiths: Awaited<ReturnType<typeof fetchMinifiedCollection>> = [];
-
-    // Check cache first
-    const cacheKey = `${collectionId}-${useExternal ? 'ext' : 'local'}`;
-    const cached = hadithCache.get(cacheKey);
-    
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      hadiths = cached.data as typeof hadiths;
-    } else {
-      if (useExternal) {
-        // Fetch from external CDN
-        hadiths = await fetchMinifiedCollection(collectionId);
-      } else {
-        // Use local data first
-        hadiths = getAllHadithsByCollection(collectionId);
-        
-        // If local data is empty, try external
-        if (hadiths.length === 0) {
-          hadiths = await fetchMinifiedCollection(collectionId);
-        }
-      }
-      
-      // Cache the results
-      if (hadiths.length > 0) {
-        hadithCache.set(cacheKey, { data: hadiths, timestamp: Date.now() });
-      }
-    }
-
-    // Apply pagination
-    const startIndex = (page - 1) * limit;
-    const paginatedHadiths = hadiths.slice(startIndex, startIndex + limit);
+    const result = await getCollectionHadiths(collectionId, {
+      page,
+      limit,
+      status: status || undefined,
+    });
 
     return NextResponse.json({
       success: true,
-      data: paginatedHadiths,
+      data: result.hadiths,
       pagination: {
-        page,
-        limit,
-        total: hadiths.length,
-        totalPages: Math.ceil(hadiths.length / limit),
-        hasMore: startIndex + limit < hadiths.length,
+        page: result.currentPage,
+        limit: result.limit,
+        total: result.total,
+        lastPage: result.lastPage,
+        hasMore: result.hasMore,
       },
       collection: collectionId,
-      source: hadiths.length > 0 ? (useExternal ? "external" : "local") : "none",
     });
   } catch (error) {
     console.error("Error fetching hadiths:", error);
