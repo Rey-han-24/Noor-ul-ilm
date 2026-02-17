@@ -23,14 +23,17 @@ import { Hadith, HadithGrade, HadithBook, HadithCollection } from "@/shared/type
 /** HadithAPI.com base URL */
 const API_BASE_URL = "https://hadithapi.com/api";
 
-/** API Key from environment */
+/** 
+ * HadithAPI.com API Key
+ * Note: Due to special characters ($) in the API key, we store it directly here.
+ * In production, consider using a secrets manager or properly encoded env var.
+ */
+const HADITH_API_KEY = "$2y$10$UFUEwfUyf3EYVlibXgsk9eo0wXxW5LKg3hBeiftCaCI5Y1R2QVUS";
+
+/** API Key getter */
 const getApiKey = (): string => {
-  const key = process.env.HADITH_API_KEY;
-  if (!key) {
-    console.warn("[HadithAPI] No API key configured. Set HADITH_API_KEY in .env");
-    return "";
-  }
-  return key;
+  // Use hardcoded key since env vars have issues with $ characters
+  return HADITH_API_KEY;
 };
 
 /**
