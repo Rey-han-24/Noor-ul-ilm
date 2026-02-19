@@ -222,6 +222,19 @@ export default async function CollectionPage({ params }: PageProps) {
                   <span className="text-[var(--foreground)]">{collection.totalHadiths.toLocaleString()} Hadiths</span>
                 </div>
               </div>
+
+              {/* Browse All Button */}
+              <div className="mt-6">
+                <Link
+                  href={`/hadith/${collectionId}/browse`}
+                  className="inline-flex items-center gap-2 rounded-lg bg-[var(--gold)] px-6 py-3 text-sm font-medium text-[var(--primary)] transition-colors hover:bg-[var(--gold-light)]"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                  Browse All {collection.totalHadiths.toLocaleString()} Hadiths
+                </Link>
+              </div>
             </div>
           </div>
         </section>
