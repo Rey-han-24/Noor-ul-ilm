@@ -24,9 +24,7 @@ const amiri = Amiri({
   display: "swap",
 });
 
-/**
- * Viewport configuration for mobile optimization
- */
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
