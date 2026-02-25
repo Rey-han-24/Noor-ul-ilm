@@ -109,9 +109,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    // Add your verification codes here when ready
-    // google: "your-google-verification-code",
-    // yandex: "your-yandex-verification-code",
+   
   },
   category: "Religion",
   classification: "Islamic Education",
