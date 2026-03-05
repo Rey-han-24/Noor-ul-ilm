@@ -29,18 +29,14 @@ import {
   getSearchSuggestions,
 } from "@/backend/services/search-api";
 
-/**
- * Filter tabs configuration
- */
+
 const FILTER_TABS: { id: SearchFilter; label: string; icon: string }[] = [
   { id: "all", label: "All", icon: "🔍" },
   { id: "quran", label: "Quran", icon: "📖" },
   { id: "hadith", label: "Hadith", icon: "📜" },
 ];
 
-/**
- * Search input component with suggestions
- */
+
 function SearchInput({
   value,
   onChange,
