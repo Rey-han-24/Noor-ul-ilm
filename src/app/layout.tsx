@@ -42,7 +42,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://noorulilm.com"),
   title: {
-    default: "Noor ul Ilm - نور العلم | Quran & Hadith Online",
+    default: "Noor ul Ilm - نور العلم | Quran & Hadith ",
     template: "%s | Noor ul Ilm",
   },
   description:
